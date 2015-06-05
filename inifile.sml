@@ -43,9 +43,10 @@ fun tokenizeLine (line : string) : linetype =
                 raise Fail("invalid line: " ^ line)
     end
 
-fun makeSections(lines : linetype list, acc: section list) : section list =
+fun makeSections (lines : linetype list, acc: section list) : section list =
     case lines of
-          [] => acc
+          [] => map
+            (fn x => { name = #name x, contents = rev(#contents x) }) (rev acc)
         | SectionLine(section)::xs =>
             makeSections(xs, section::acc)
         | AssignmentLine(a)::xs =>
@@ -63,6 +64,20 @@ fun parseIni (lines : string list) : inifile =
         makeSections(tokenizedLines, [])
     end
 
+fun stringifySection (sec : section) : string =
+    let
+        val header = #name sec
+        val body = map (fn a => (#key a) ^ "=" ^ (#value a)) (#contents sec)
+    in
+        header ^ "\n" ^ (String.concatWith "\n" body)
+    end
+
+fun outputIni ini =
+    let
+        val sections = map stringifySection ini
+    in
+        print(String.concatWith "\n" sections)
+    end
 fun processArgs [] =
         let
             val _ = print("Usage: inifile command filename section " ^
@@ -72,29 +87,23 @@ fun processArgs [] =
         end
     | processArgs ["g", filename, section] =
         (* Get section *)
-        (parseIni o readFile) filename
+        (outputIni o parseIni o readFile) filename
     | processArgs ["g", filename, section, item] =
         (* Get item *)
-        (parseIni o readFile) filename
+        (outputIni o  parseIni o readFile) filename
     | processArgs ["d", filename, section] =
         (* Delete section *)
-        (parseIni o readFile) filename
+        (outputIni o  parseIni o readFile) filename
     | processArgs ["d", filename, section, item] =
         (* Delete item *)
-        (parseIni o readFile) filename
+        (outputIni o  parseIni o readFile) filename
     | processArgs ["s", filename, section, item, value] =
         (* Set value *)
-        (parseIni o readFile) filename
+        (outputIni o  parseIni o readFile) filename
     | processArgs _ =
         processArgs []
 
 
 val args = CommandLine.arguments()
 val _ = processArgs args
-
-
-val filename = "test.ini"
-val contents = readFile filename
-    handle Error => exitWithError ("couldn't read file " ^ filename)
-val _ = map (fn x => print (x ^ "\n")) contents
 val _ = OS.Process.exit(OS.Process.success)
