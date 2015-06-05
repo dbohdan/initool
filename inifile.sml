@@ -28,7 +28,7 @@ fun exitWithError (message: string) =
     end
 
 (* A very rough tokenizer for INI lines. *)
-fun parseLine (line : string) : linetype =
+fun tokenizeLine (line : string) : linetype =
     let
         val isSection =
             (String.isPrefix "[" line) andalso (String.isSuffix "]" line)
@@ -43,16 +43,37 @@ fun parseLine (line : string) : linetype =
                 raise Fail("invalid line: " ^ line)
     end
 
+fun groupAssignments(lines : linetype list, acc: linetype list list) =
+    let
+        val name = case lines of
+              [] => acc
+            | SectionLine(sec)::xs =>
+                groupAssignments(xs, [SectionLine(sec)]::acc)
+            | AssignmentLine(a)::xs =>
+                let
+                    val (y : linetype list)::(ys : linetype list list) = acc
+                    val (section : linetype)::(rest : linetype list) = y
+                    val newAcc : linetype list list =
+                        (section::AssignmentLine(a)::rest)::ys
+                in
+                    groupAssignments(xs, newAcc)
+                end
+    in
+        name
+    end
+
 fun parseIni (lines : string list) : inifile =
     let
-        val tokenizedLines = map parseLine lines
+        val tokenizedLines = map tokenizeLine lines
+        val groupedAssignements = groupAssignments(tokenizedLines, [])
     in
         NONE
     end
 
 fun processArgs [] =
         let
-            val _ = print "Usage: \n"
+            val _ = print("Usage: inifile command filename section " ^
+                    "[item [value]] \n")
         in
             OS.Process.exit(OS.Process.success)
         end
