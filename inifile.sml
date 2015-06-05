@@ -2,9 +2,9 @@
 
 (* key=value in an ini file *)
 type assignment = { key : string, value : string }
-type sectionContents = assignment list option
+type sectionContents = assignment list
 type section = { name : string, contents : sectionContents }
-type inifile = section list option
+type inifile = section list
 
 datatype linetype = AssignmentLine of assignment | SectionLine of section
 datatype query =  AnythingQuery | StringQuery of string
@@ -36,38 +36,31 @@ fun tokenizeLine (line : string) : linetype =
     in
         case (isSection, assignmentFields) of
               (true, _) =>
-                SectionLine({ name = line, contents = NONE })
+                SectionLine({ name = line, contents = [] })
             | (false, [key, value]) =>
                 AssignmentLine({ key = key, value = value })
             | (false, _) =>
                 raise Fail("invalid line: " ^ line)
     end
 
-fun groupAssignments(lines : linetype list, acc: linetype list list) =
-    let
-        val name = case lines of
-              [] => acc
-            | SectionLine(sec)::xs =>
-                groupAssignments(xs, [SectionLine(sec)]::acc)
-            | AssignmentLine(a)::xs =>
-                let
-                    val (y : linetype list)::(ys : linetype list list) = acc
-                    val (section : linetype)::(rest : linetype list) = y
-                    val newAcc : linetype list list =
-                        (section::AssignmentLine(a)::rest)::ys
-                in
-                    groupAssignments(xs, newAcc)
-                end
-    in
-        name
-    end
+fun makeSections(lines : linetype list, acc: section list) : section list =
+    case lines of
+          [] => acc
+        | SectionLine(section)::xs =>
+            makeSections(xs, section::acc)
+        | AssignmentLine(a)::xs =>
+            let
+                val (y : section)::(ys : section list) = acc
+                val newAcc = { name = #name y, contents = a::(#contents y)}::ys
+            in
+                makeSections(xs, newAcc)
+            end
 
 fun parseIni (lines : string list) : inifile =
     let
         val tokenizedLines = map tokenizeLine lines
-        val groupedAssignements = groupAssignments(tokenizedLines, [])
     in
-        NONE
+        makeSections(tokenizedLines, [])
     end
 
 fun processArgs [] =
