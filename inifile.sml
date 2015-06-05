@@ -32,22 +32,14 @@ fun parseLine (line : string) : linetype =
     let
         val isSection =
             (String.isPrefix "[" line) andalso (String.isSuffix "]" line)
-        val assignFields = (String.fields (fn c => c = #"=") line)
-        val isAssignment = (List.length assignFields) = 2
+        val assignmentFields = (String.fields (fn c => c = #"=") line)
     in
-        case (isSection, isAssignment) of
-            (true, false) =>
-                SectionLine ({
-                    name = line,
-                    contents = NONE
-                })
-            | (false, true) =>
-                let
-                    val [key, value] = assignFields
-                in
-                    AssignmentLine({ key = key, value = value })
-                end
-            | (_, _) =>
+        case (isSection, assignmentFields) of
+              (true, _) =>
+                SectionLine({ name = line, contents = NONE })
+            | (false, [key, value]) =>
+                AssignmentLine({ key = key, value = value })
+            | (false, _) =>
                 raise Fail("invalid line: " ^ line)
     end
 
