@@ -5,7 +5,10 @@ type assignment = { key : string, value : string }
 type section = { name : string, contents : assignment list }
 type ini_data = section list
 
-datatype line_token = AssignmentLine of assignment | SectionLine of section
+datatype line_token =
+      AssignmentLine of assignment
+    | SectionLine of section
+    | CommentLine of string
 datatype query = Everything | With of string | Without of string
 
 exception Tokenization of string
@@ -31,16 +34,24 @@ fun exitWithError (message : string) =
 (* A very rough tokenizer for INI lines. *)
 fun tokenizeLine (line : string) : line_token =
     let
+        val isComment = String.isPrefix ";" line
         val isSection =
             (String.isPrefix "[" line) andalso (String.isSuffix "]" line)
         val assignmentFields = (String.fields (fn c => c = #"=") line)
     in
-        case (isSection, assignmentFields) of
-              (true, _) =>
-                SectionLine({ name = line, contents = [] })
-            | (false, [key, value]) =>
-                AssignmentLine({ key = key, value = value })
-            | (false, _) =>
+        case (line, isComment, isSection, assignmentFields) of
+              ("[]", _, _, _) => raise Tokenization("empty section name")
+            | (_, true, _, _) => CommentLine(line)
+            | (_, false, true, _) =>
+                let
+                    val size = String.size line
+                    val sectionName = String.substring (line, 1, (size - 2))
+                in
+                    SectionLine { name = sectionName, contents = [] }
+                end
+            | (_, false, false, [key, value]) =>
+                AssignmentLine { key = key, value = value }
+            | (_, false, false, _) =>
                 raise Tokenization("invalid line: " ^ line)
     end
 
@@ -53,11 +64,15 @@ fun makeSections (lines : line_token list, acc: section list) : ini_data =
             makeSections(xs, sec::acc)
         | AssignmentLine(a)::xs =>
             let
-                val (y : section)::(ys : section list) = acc
-                val newAcc = { name = #name y, contents = a::(#contents y)}::ys
+                val newAcc = case acc of
+                      (y : section)::(ys : section list) =>
+                        { name = #name y, contents = a::(#contents y)}::ys
+                    | [] => [{ name = "", contents = [a] }]
             in
                 makeSections(xs, newAcc)
             end
+        (* Skip comment lines. *)
+        | CommentLine(comment)::xs => makeSections(xs, acc)
 
 fun parseIni (lines : string list) : ini_data =
     let
@@ -69,10 +84,12 @@ fun parseIni (lines : string list) : ini_data =
 
 fun stringifySection (sec : section) : string =
     let
-        val header = #name sec
+        val header = case #name sec of
+              "" => ""
+            | sectionName =>  "[" ^ sectionName ^ "]\n"
         val body = map (fn a => (#key a) ^ "=" ^ (#value a)) (#contents sec)
     in
-        header ^ "\n" ^ (String.concatWith "\n" body)
+        header ^ (String.concatWith "\n" body)
     end
 
 fun outputIni (ini : ini_data) : unit =
@@ -160,8 +177,10 @@ fun processFile filterFn filename =
 
 fun processArgs [] =
         let
-            val _ = print("Usage: ini_data command filename [section " ^
-                    "[item [value]]] \n")
+            val _ = print (
+                "Usage: inifile g filename [section [item]]\n" ^
+                "       inifile d filename section [item]\n" ^
+                "       inifile s filename section item value\n")
         in
             OS.Process.exit(OS.Process.success)
         end
@@ -171,32 +190,32 @@ fun processArgs [] =
         (* Get section *)
         processFile
             (selectFromIni
-                (With ("[" ^ section ^ "]")) Everything Everything)
+                (With section) Everything Everything)
             filename
     | processArgs ["g", filename, section, item] =
         (* Get item *)
         processFile
             (selectFromIni
-                (With ("[" ^ section ^ "]")) (With item) Everything)
+                (With section) (With item) Everything)
             filename
     | processArgs ["d", filename, section] =
         (* Delete section *)
         processFile
             (selectFromIni
-                (Without ("[" ^ section ^ "]")) Everything Everything)
+                (Without section) Everything Everything)
             filename
     | processArgs ["d", filename, section, item] =
         (* Delete item *)
         (* FIXME *)
         processFile
             (selectFromIni
-                (With ("[" ^ section ^ "]")) (Without item) Everything)
+                (With section) (Without item) Everything)
             filename
     | processArgs ["s", filename, section, item, value] =
         (* Set value *)
         let
             val update = [{
-                name = "[" ^ section ^ "]",
+                name = section,
                 contents = [{ key = item, value = value}]
             }]
         in
