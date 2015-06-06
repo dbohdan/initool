@@ -9,7 +9,13 @@ datatype line_token =
       AssignmentLine of assignment
     | SectionLine of section
     | CommentLine of string
-datatype query = Everything | With of string | Without of string
+datatype operation =
+      Noop
+    | SelectSection of string
+    | SelectProperty of { section : string, key : string }
+    | RemoveSection of string
+    | RemoveProperty of { section : string, key : string }
+    | UpdateProperty of { section : string, key : string, newValue : string }
 
 exception Tokenization of string
 
@@ -99,30 +105,27 @@ fun outputIni (ini : ini_data) : unit =
         print((String.concatWith "\n" sections) ^ "\n")
     end
 
-fun matchQuery (q: query) (value: string) : bool =
-    case q of
-          Everything => true
-        | With(s) => value = s
-        | Without(s) => value <> s
+fun matchOp (opr : operation) (sectionName : string) (key : string) : bool =
+    case opr of
+          Noop => true
+        | SelectSection osn => sectionName = osn
+        | SelectProperty { section = osn, key = okey } =>
+            (sectionName = osn) andalso (key = okey)
+        | RemoveSection osn => sectionName <> osn
+        | RemoveProperty { section = osn, key = okey } => (sectionName <> osn) orelse (key <> okey)
+        | UpdateProperty { section = osn, key = okey, newValue = nv } =>
+            (sectionName = osn) andalso (key = okey)
 
-fun selectItem (keyToFind : query) (valueToFind : query)
-               (sec : section) : section =
-    let
-        val filterFn = fn { key, value } =>
-            (matchQuery keyToFind key) andalso (matchQuery valueToFind value)
-    in
+fun selectItems (opr : operation) (sec : section) : section =
         {
             name = (#name sec),
-            contents = List.filter filterFn (#contents sec)
+            contents = List.filter (fn a => matchOp opr (#name sec) (#key a)) (#contents sec)
         }
-    end
 
-fun selectFromIni (section : query) (key : query) (value : query)
-                  (ini : ini_data) : ini_data =
+
+fun selectFromIni (opr : operation) (ini : ini_data) : ini_data =
     let
-        val selectedSections =
-            List.filter (fn sec => matchQuery section (#name sec)) ini
-        val mapped = List.map (selectItem key value) selectedSections
+        val mapped = List.map (selectItems opr) ini
     in
         List.filter (fn sec => (not o null o #contents) sec) mapped
     end
@@ -188,29 +191,24 @@ fun processArgs [] =
         processFile (fn x => x) filename
     | processArgs ["g", filename, section] =
         (* Get section *)
-        processFile
-            (selectFromIni
-                (With section) Everything Everything)
-            filename
+        processFile (selectFromIni (SelectSection section)) filename
     | processArgs ["g", filename, section, item] =
         (* Get item *)
-        processFile
-            (selectFromIni
-                (With section) (With item) Everything)
-            filename
+        let
+            val q = SelectProperty { section = section, key = item }
+        in
+            processFile (selectFromIni q) filename
+        end
     | processArgs ["d", filename, section] =
         (* Delete section *)
-        processFile
-            (selectFromIni
-                (Without section) Everything Everything)
-            filename
+        processFile (selectFromIni (RemoveSection section)) filename
     | processArgs ["d", filename, section, item] =
         (* Delete item *)
-        (* FIXME *)
-        processFile
-            (selectFromIni
-                (With section) (Without item) Everything)
-            filename
+        let
+            val q = RemoveProperty { section = section, key = item }
+        in
+            processFile (selectFromIni q) filename
+        end
     | processArgs ["s", filename, section, item, value] =
         (* Set value *)
         let
