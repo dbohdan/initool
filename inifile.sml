@@ -1,15 +1,14 @@
-(* IniFile *)
+(* ini_data *)
 
-(* key=value in an ini file *)
+(* Model an INI file starting with key=value pairs. *)
 type assignment = { key : string, value : string }
-type sectionContents = assignment list
-type section = { name : string, contents : sectionContents }
-type inifile = section list
+type section = { name : string, contents : assignment list }
+type ini_data = section list
 
-datatype linetype = AssignmentLine of assignment | SectionLine of section
+datatype line_token = AssignmentLine of assignment | SectionLine of section
 datatype query = Everything | With of string | Without of string
 
-fun readFile (filename : string) : string list =
+fun readLines (filename : string) : string list =
     let
         val file = TextIO.openIn filename
         val contents = TextIO.inputAll file
@@ -28,7 +27,7 @@ fun exitWithError (message : string) =
     end
 
 (* A very rough tokenizer for INI lines. *)
-fun tokenizeLine (line : string) : linetype =
+fun tokenizeLine (line : string) : line_token =
     let
         val isSection =
             (String.isPrefix "[" line) andalso (String.isSuffix "]" line)
@@ -43,7 +42,8 @@ fun tokenizeLine (line : string) : linetype =
                 raise Fail("invalid line: " ^ line)
     end
 
-fun makeSections (lines : linetype list, acc: section list) : section list =
+(* Transform a list of tokens into a simple AST for the INI file. *)
+fun makeSections (lines : line_token list, acc: section list) : ini_data =
     case lines of
           [] => map
             (fn x => { name = #name x, contents = rev(#contents x) }) (rev acc)
@@ -57,7 +57,7 @@ fun makeSections (lines : linetype list, acc: section list) : section list =
                 makeSections(xs, newAcc)
             end
 
-fun parseIni (lines : string list) : inifile =
+fun parseIni (lines : string list) : ini_data =
     let
         val tokenizedLines = map tokenizeLine lines
     in
@@ -72,7 +72,7 @@ fun stringifySection (sec : section) : string =
         header ^ "\n" ^ (String.concatWith "\n" body)
     end
 
-fun outputIni (ini : inifile) : unit =
+fun outputIni (ini : ini_data) : unit =
     let
         val sections = map stringifySection ini
     in
@@ -96,7 +96,7 @@ fun selectItem (keyToFind : query) (valueToFind : query) (sec : section) : secti
         }
     end
 
-fun selectFromIni (section : query) (key : query) (value : query) (ini : inifile) : inifile =
+fun selectFromIni (section : query) (key : query) (value : query) (ini : ini_data) : ini_data =
     let
         val selectedSections =
             List.filter (fn sec => matchQuery section (#name sec)) ini
@@ -105,10 +105,10 @@ fun selectFromIni (section : query) (key : query) (value : query) (ini : inifile
         List.filter (fn sec => (not o null o #contents) sec) mapped
     end
 
-(* Find replacement values in repl for the existing items in src.
+(* Find replacement values in from for the existing items in to.
  * This function makes n^2 comparisons and is hence slow. *)
-(* TODO: Make this merge new items. *)
-fun mergeSection (repl: section) (src: section) : section =
+(* TODO: Rename "src". *)
+fun mergeSection (from : section) (to : section) : section =
     let
         fun findReplacements (replacementSource : assignment list) a1 =
             let
@@ -119,37 +119,44 @@ fun mergeSection (repl: section) (src: section) : section =
                       SOME(a2) => a2
                     | NONE => a1
             end
+        fun missingIn (al : assignment list) (a1 : assignment) : bool =
+            not (List.exists (fn a2 => (#key a2) = (#key a1)) al)
         val updatedItems =
-            List.map (findReplacements (#contents repl)) (#contents src)
+            List.map (findReplacements (#contents from)) (#contents to)
+        val newItems =
+            List.filter (missingIn updatedItems) (#contents from)
+        val mergedItems = updatedItems @ newItems
     in
-        { name = (#name src), contents = updatedItems }
+        { name = (#name to), contents = mergedItems }
     end
 
 (* This function makes n^2 comparisons and is hence slow. *)
-(* TODO: Make this merge new sections. *)
-fun mergeIni (repl: inifile) (src: inifile) : inifile =
+fun mergeIni (from: ini_data) (to: ini_data) : ini_data =
     let
-        fun mergeOrKeep oldSec =
+        fun mergeOrKeep sec1 =
             let
-                val counterpart =
-                    List.find (fn newSec => (#name newSec) = (#name oldSec)) repl
+                val secToMerge =
+                    List.find (fn sec2 => (#name sec2) = (#name sec1)) from
             in
-                case counterpart of
-                      SOME(newSec) => mergeSection newSec oldSec
-                    | NONE => oldSec
+                case secToMerge of
+                      SOME(sec2) => mergeSection sec2 sec1
+                    | NONE => sec1
             end
+        fun missingIn (ini : ini_data) (sec1 : section) : bool =
+            not (List.exists (fn sec2 => (#name sec2) = (#name sec1)) ini)
 
-        val updatedIni = List.map mergeOrKeep src
+        val updatedIni = List.map mergeOrKeep to
+        val newSections = List.filter (missingIn updatedIni) from
     in
-        updatedIni
+        updatedIni @ newSections
     end
 
 fun processFile filterFn filename =
-    (outputIni o filterFn o parseIni o readFile) filename
+    (outputIni o filterFn o parseIni o readLines) filename
 
 fun processArgs [] =
         let
-            val _ = print("Usage: inifile command filename section " ^
+            val _ = print("Usage: ini_data command filename section " ^
                     "[item [value]] \n")
         in
             OS.Process.exit(OS.Process.success)
