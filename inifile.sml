@@ -156,11 +156,13 @@ fun processFile filterFn filename =
 
 fun processArgs [] =
         let
-            val _ = print("Usage: ini_data command filename section " ^
-                    "[item [value]] \n")
+            val _ = print("Usage: ini_data command filename [section " ^
+                    "[item [value]]] \n")
         in
             OS.Process.exit(OS.Process.success)
         end
+    | processArgs ["g", filename] =
+        processFile (fn x => x) filename
     | processArgs ["g", filename, section] =
         (* Get section *)
         processFile
