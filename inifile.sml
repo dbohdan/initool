@@ -7,7 +7,7 @@ type section = { name : string, contents : sectionContents }
 type inifile = section list
 
 datatype linetype = AssignmentLine of assignment | SectionLine of section
-datatype query = FindEverything | FindString of string
+datatype query = Everything | With of string | Without of string
 
 fun readFile (filename : string) : string list =
     let
@@ -79,37 +79,69 @@ fun outputIni (ini : inifile) : unit =
         print((String.concatWith "\n" sections) ^ "\n")
     end
 
-fun selectAssignments (searchKey : string) (invert : bool) (al : assignment list) : assignment list =
+fun matchQuery (q: query) (value: string) : bool =
+    case q of
+          Everything => true
+        | With(s) => value = s
+        | Without(s) => value <> s
+
+fun selectItem (keyToFind : query) (valueToFind : query) (sec : section) : section =
     let
-        val filterFn = fn a : assignment =>
-            let
-                val { key, value } = a
-                val match = searchKey = key
-            in
-                if invert then not match else match
-            end
+        val filterFn = fn { key, value } =>
+            (matchQuery keyToFind key) andalso (matchQuery valueToFind value)
     in
-        List.filter filterFn al
+        {
+            name = (#name sec),
+            contents = List.filter filterFn (#contents sec)
+        }
     end
 
-fun selectSection (sectionName : string) (ini : inifile) : inifile =
-    List.filter (fn sec => (#name sec) = sectionName) ini
-
-fun removeSection (sectionName : string) (ini : inifile) : inifile =
-    List.filter (fn sec => (#name sec) <> sectionName) ini
-
-fun selectItem (keyToFind : string) (sec : section) : section =
-    {
-        name = (#name sec),
-        contents =
-            List.filter (fn { key, value } => key = keyToFind) (#contents sec)
-    }
-
-fun selectItems (keyToFind : string) (ini : inifile) : inifile =
+fun selectFromIni (section : query) (key : query) (value : query) (ini : inifile) : inifile =
     let
-        val mapped = List.map (selectItem keyToFind) ini
+        val selectedSections =
+            List.filter (fn sec => matchQuery section (#name sec)) ini
+        val mapped = List.map (selectItem key value) selectedSections
     in
         List.filter (fn sec => (not o null o #contents) sec) mapped
+    end
+
+(* Find replacement values in repl for the existing items in src.
+ * This function makes n^2 comparisons and is hence slow. *)
+(* TODO: Make this merge new items. *)
+fun mergeSection (repl: section) (src: section) : section =
+    let
+        fun findReplacements (replacementSource : assignment list) a1 =
+            let
+                val replacement =
+                    List.find (fn a2 => (#key a2) = (#key a1)) replacementSource
+            in
+                case replacement of
+                      SOME(a2) => a2
+                    | NONE => a1
+            end
+        val updatedItems =
+            List.map (findReplacements (#contents repl)) (#contents src)
+    in
+        { name = (#name src), contents = updatedItems }
+    end
+
+(* This function makes n^2 comparisons and is hence slow. *)
+(* TODO: Make this merge new sections. *)
+fun mergeIni (repl: inifile) (src: inifile) : inifile =
+    let
+        fun mergeOrKeep oldSec =
+            let
+                val counterpart =
+                    List.find (fn newSec => (#name newSec) = (#name oldSec)) repl
+            in
+                case counterpart of
+                      SOME(newSec) => mergeSection newSec oldSec
+                    | NONE => oldSec
+            end
+
+        val updatedIni = List.map mergeOrKeep src
+    in
+        updatedIni
     end
 
 fun processFile filterFn filename =
@@ -124,19 +156,39 @@ fun processArgs [] =
         end
     | processArgs ["g", filename, section] =
         (* Get section *)
-        processFile (selectSection("[" ^ section ^ "]")) filename
+        processFile
+            (selectFromIni
+                (With ("[" ^ section ^ "]")) Everything Everything)
+            filename
     | processArgs ["g", filename, section, item] =
         (* Get item *)
-        processFile (selectSection ("[" ^ section ^ "]") o (selectItems item)) filename
+        processFile
+            (selectFromIni
+                (With ("[" ^ section ^ "]")) (With item) Everything)
+            filename
     | processArgs ["d", filename, section] =
         (* Delete section *)
-        processFile (removeSection("[" ^ section ^ "]")) filename
+        processFile
+            (selectFromIni
+                (Without ("[" ^ section ^ "]")) Everything Everything)
+            filename
     | processArgs ["d", filename, section, item] =
         (* Delete item *)
-        (outputIni o  parseIni o readFile) filename
+        (* FIXME *)
+        processFile
+            (selectFromIni
+                (With ("[" ^ section ^ "]")) (Without item) Everything)
+            filename
     | processArgs ["s", filename, section, item, value] =
         (* Set value *)
-        (outputIni o  parseIni o readFile) filename
+        let
+            val update = [{
+                name = "[" ^ section ^ "]",
+                contents = [{ key = item, value = value}]
+            }]
+        in
+            processFile (mergeIni update) filename
+        end
     | processArgs _ =
         processArgs []
 
