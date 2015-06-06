@@ -8,6 +8,8 @@ type ini_data = section list
 datatype line_token = AssignmentLine of assignment | SectionLine of section
 datatype query = Everything | With of string | Without of string
 
+exception Tokenization of string
+
 fun readLines (filename : string) : string list =
     let
         val file = TextIO.openIn filename
@@ -39,7 +41,7 @@ fun tokenizeLine (line : string) : line_token =
             | (false, [key, value]) =>
                 AssignmentLine({ key = key, value = value })
             | (false, _) =>
-                raise Fail("invalid line: " ^ line)
+                raise Tokenization("invalid line: " ^ line)
     end
 
 (* Transform a list of tokens into a simple AST for the INI file. *)
@@ -60,6 +62,7 @@ fun makeSections (lines : line_token list, acc: section list) : ini_data =
 fun parseIni (lines : string list) : ini_data =
     let
         val tokenizedLines = map tokenizeLine lines
+            handle Tokenization(message) => exitWithError message
     in
         makeSections(tokenizedLines, [])
     end
@@ -85,7 +88,8 @@ fun matchQuery (q: query) (value: string) : bool =
         | With(s) => value = s
         | Without(s) => value <> s
 
-fun selectItem (keyToFind : query) (valueToFind : query) (sec : section) : section =
+fun selectItem (keyToFind : query) (valueToFind : query)
+               (sec : section) : section =
     let
         val filterFn = fn { key, value } =>
             (matchQuery keyToFind key) andalso (matchQuery valueToFind value)
@@ -96,7 +100,8 @@ fun selectItem (keyToFind : query) (valueToFind : query) (sec : section) : secti
         }
     end
 
-fun selectFromIni (section : query) (key : query) (value : query) (ini : ini_data) : ini_data =
+fun selectFromIni (section : query) (key : query) (value : query)
+                  (ini : ini_data) : ini_data =
     let
         val selectedSections =
             List.filter (fn sec => matchQuery section (#name sec)) ini
