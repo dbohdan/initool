@@ -107,7 +107,6 @@ fun selectFromIni (section : query) (key : query) (value : query) (ini : ini_dat
 
 (* Find replacement values in from for the existing items in to.
  * This function makes n^2 comparisons and is hence slow. *)
-(* TODO: Rename "src". *)
 fun mergeSection (from : section) (to : section) : section =
     let
         fun findReplacements (replacementSource : assignment list) a1 =
