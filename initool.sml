@@ -58,8 +58,10 @@ fun tokenizeLine (line : string) : line_token =
                 in
                     SectionLine { name = sectionName, contents = [] }
                 end
-            | (_, false, false, [key, value]) =>
-                PropertyLine { key = key, value = value }
+            | (_, false, false, key::value) =>
+                (case value of
+                      [] => raise Tokenization("invalid line: " ^ line)
+                    | _ => PropertyLine { key = key, value = String.concatWith "=" value })
             | (_, false, false, _) =>
                 raise Tokenization("invalid line: " ^ line)
     end
