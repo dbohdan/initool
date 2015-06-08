@@ -1,4 +1,4 @@
-(* initool -- a tool for manipulating INI files from the command line
+(* initool -- manipulate the contents of INI files from the command line
  * Copyright (C) 2015 Danyil Bohdan
  * License: MIT
  *)
@@ -61,43 +61,46 @@ fun tokenizeLine (line : string) : line_token =
             | (_, false, false, key::value) =>
                 (case value of
                       [] => raise Tokenization("invalid line: " ^ line)
-                    | _ => PropertyLine { key = key, value = String.concatWith "=" value })
+                    | _ => PropertyLine {
+                        key = key,
+                        value = String.concatWith "=" value
+                    })
             | (_, false, false, _) =>
                 raise Tokenization("invalid line: " ^ line)
     end
 
 (* Transform a list of tokens into a simple AST for the INI file. *)
-fun makeSections (lines : line_token list, acc: section list) : ini_data =
+fun makeSections (lines : line_token list) (acc : section list) : ini_data =
     case lines of
           [] => map
             (fn x => { name = #name x, contents = rev(#contents x) }) (rev acc)
         | SectionLine(sec)::xs =>
-            makeSections(xs, sec::acc)
+            makeSections xs (sec::acc)
         | PropertyLine(prop)::xs =>
             let
                 val newAcc = case acc of
                       (y : section)::(ys : section list) =>
-                        { name = #name y, contents = prop::(#contents y)}::ys
+                        { name = #name y, contents = prop::(#contents y) }::ys
                     | [] => [{ name = "", contents = [prop] }]
             in
-                makeSections(xs, newAcc)
+                makeSections xs newAcc
             end
         (* Skip comment lines. *)
-        | CommentLine(comment)::xs => makeSections(xs, acc)
+        | CommentLine(comment)::xs => makeSections xs acc
 
 fun parseIni (lines : string list) : ini_data =
     let
         val tokenizedLines = map tokenizeLine lines
             handle Tokenization(message) => exitWithError message
     in
-        makeSections(tokenizedLines, [])
+        makeSections tokenizedLines []
     end
 
 fun stringifySection (sec : section) : string =
     let
         val header = case #name sec of
               "" => ""
-            | sectionName =>  "[" ^ sectionName ^ "]\n"
+            | sectionName => "[" ^ sectionName ^ "]\n"
         val body = List.map
             (fn prop => (#key prop) ^ "=" ^ (#value prop)) (#contents sec)
     in
