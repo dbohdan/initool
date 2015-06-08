@@ -1,4 +1,7 @@
-(* ini_data *)
+(* initool -- a tool for manipulating INI files from the command line
+ * Copyright (C) 2015 Danyil Bohdan
+ * License: MIT
+ *)
 
 (* Model an INI file starting with key=value pairs. *)
 type property = { key : string, value : string }
@@ -135,7 +138,8 @@ fun selectFromIni (opr : operation) (ini : ini_data) : ini_data =
     end
 
 (* Find replacement values in from for the existing properties in to.
- * This function makes n^2 comparisons and is hence slow. *)
+ * This function makes n^2 comparisons and is hence slow.
+ *)
 fun mergeSection (from : section) (to : section) : section =
     let
         fun findReplacements (replacementSource : property list) p1 =
@@ -185,9 +189,9 @@ fun processFile filterFn filename =
 fun processArgs [] =
         let
             val _ = print (
-                "Usage: inifile g filename [section [key]]\n" ^
-                "       inifile d filename section [key]\n" ^
-                "       inifile s filename section key value\n")
+                "Usage: initool g filename [section [key]]\n" ^
+                "       initool d filename section [key]\n" ^
+                "       initool s filename section key value\n")
         in
             OS.Process.exit(OS.Process.success)
         end

@@ -1,1 +1,1 @@
-Error: invalid line: $INIFILE g tests/read-garbage.command 2>&1
+Error: invalid line: $INITOOL g tests/read-garbage.command 2>&1

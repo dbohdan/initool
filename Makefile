@@ -1,12 +1,12 @@
-inifile: inifile.sml
-	mlton inifile.sml
-test: inifile
+initool: initool.sml
+	mlton initool.sml
+test: initool
 	sh test.sh
 clean:
-	rm inifile
-install: inifile
-	cp inifile /usr/local/bin/inifile
+	rm initool
+install: initool
+	cp initool /usr/local/bin/initool
 uninstall:
-	rm /usr/local/bin/inifile
+	rm /usr/local/bin/initool
 .PHONY: clean test install uninstall
 .POSIX:

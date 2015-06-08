@@ -1,1 +1,1 @@
-$INIFILE d tests/test.ini bar
+$INITOOL d tests/test.ini bar

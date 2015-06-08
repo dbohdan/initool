@@ -1,1 +1,1 @@
-$INIFILE s tests/sectionless.ini '' c d
+$INITOOL s tests/sectionless.ini '' c d

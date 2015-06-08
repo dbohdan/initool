@@ -1,1 +1,1 @@
-$INIFILE g tests/test.ini baz
+$INITOOL g tests/test.ini baz

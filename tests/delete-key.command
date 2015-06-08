@@ -1,1 +1,1 @@
-$INIFILE d tests/test.ini foo name2
+$INITOOL d tests/test.ini foo name2
