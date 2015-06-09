@@ -17,7 +17,7 @@ output. See below.
 * `initool d filename section [key]` — delete a section or a property
 * `initool s filename section key value` — set a property's value
 
-When given a valid command initool reads the INI file `filename` in its
+When given a valid command initool first reads the INI file `filename` in its
 entirety. For the commands `g`, `d` and `s` it then outputs the file's
 contents with the desired modifications to the standard output. For `e` it
 reports whether the section or the property exists through its exit status.
@@ -49,7 +49,7 @@ initool g tests/test.ini foo name1 --value-only
 
 How nonexistent sections and properties are handled depends on the command.
 
-| Command | Result | Exist status |
+| Command | Result | Exit status |
 |---------|--------|--------------|
 | `g` | A blank line is output. | 0 |
 | `e` | No output. | 0 if the section/property exists and 1 if not. |
@@ -70,8 +70,8 @@ accomplish this, e.g, using [sed](http://stackoverflow.com/a/2613834/3142963).
 Install [MLton](http://mlton.org/) (package `mlton` on Debian, Ubuntu, Fedora,
 CentOS and FreeBSD).
 
-Clone the repository and run `make` and `sudo make install` in it. Run `sudo
-make uninstall` to remove.
+Clone the repository and run `make` and `sudo make install` in it. initool
+will be installed in `/usr/local/bin`. Run `sudo make uninstall` to remove it.
 
 ### Windows
 
