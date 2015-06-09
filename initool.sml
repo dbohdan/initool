@@ -194,7 +194,7 @@ fun processFile filterFn filename =
 fun processArgs [] =
         let
             val _ = print (
-                "Usage: initool g filename [section [key]]\n" ^
+                "Usage: initool g filename [section [key [--value-only]]]\n" ^
                 "       initool d filename section [key]\n" ^
                 "       initool s filename section key value\n")
         in
@@ -211,6 +211,17 @@ fun processArgs [] =
             val q = SelectProperty { section = section, key = key }
         in
             processFile (selectFromIni q) filename
+        end
+    | processArgs ["g", filename, section, key, "--value-only"] =
+        (* Get only the value *)
+        let
+            val q = SelectProperty { section = section, key = key }
+            val selection = ((selectFromIni q) o parseIni o readLines) filename
+        in
+            case selection of
+                  [{ name = _, contents = [{ key = _, value }] }] =>
+                    print (value ^ "\n")
+                | _ => print "\n"
         end
     | processArgs ["d", filename, section] =
         (* Delete section *)
