@@ -4,18 +4,20 @@ initool lets you manipulate the contents of INI files from the command line.
 
 It is a rewrite of an earlier program by the author called "iniparse", which
 was written in Object Pascal for MS-DOS and later ported to Windows. initool
-has a compatible command syntax but its operation differs; rather than modify
-INI files in place it outputs the modified file text to standard output. See
-below.
+has a backwards compatible command syntax but its operation differs; rather
+than modify INI files in place it outputs the modified file text to standard
+output. See below.
 
 ## Usage
 
 * `initool g filename [section [key [--value-only]]]` — retrieve data
+* `initool e filename section [key]` — check if a section or a property exists
 * `initool d filename section [key]` — delete section or property
 * `initool s filename section key value` — set property value
 
 Top-level properties (properties not stored in a section) are accessed by
-using an empty string for the section name.
+using an empty string for the section name. For the top-level the "exist"
+command (`e`) returns whether or not there are top-level properties.
 
 When given a valid command initool reads the INI file `filename` and outputs
 its contents with the desired modifications to the standard output. To modify

@@ -111,7 +111,7 @@ fun outputIni (ini : ini_data) : unit =
     let
         val sections = map stringifySection ini
     in
-        print((String.concatWith "\n" sections) ^ "\n")
+        print ((String.concatWith "\n" sections) ^ "\n")
     end
 
 fun matchOp (opr : operation) (sectionName : string) (key : string) : bool =
@@ -191,10 +191,20 @@ fun mergeIni (from: ini_data) (to: ini_data) : ini_data =
 fun processFile filterFn filename =
     (outputIni o filterFn o parseIni o readLines) filename
 
+fun reportFoundInFile filterFn filename =
+    let
+        val selection = (filterFn o parseIni o readLines) filename
+    in
+        case selection of
+              [] => print "0\n"
+            | _ => print "1\n"
+    end
+
 fun processArgs [] =
         let
             val _ = print (
                 "Usage: initool g filename [section [key [--value-only]]]\n" ^
+                "       initool e filename [section [key]]\n" ^
                 "       initool d filename section [key]\n" ^
                 "       initool s filename section key value\n")
         in
@@ -222,6 +232,20 @@ fun processArgs [] =
                   [{ name = _, contents = [{ key = _, value }] }] =>
                     print (value ^ "\n")
                 | _ => print "\n"
+        end
+    | processArgs ["e", filename, section] =
+        (* Section exists *)
+        let
+            val q = SelectSection section
+        in
+            reportFoundInFile (selectFromIni q) filename
+        end
+    | processArgs ["e", filename, section, key] =
+        (* Property exists *)
+        let
+            val q = SelectProperty { section = section, key = key }
+        in
+            reportFoundInFile (selectFromIni q) filename
         end
     | processArgs ["d", filename, section] =
         (* Delete section *)
