@@ -54,7 +54,8 @@ make uninstall` to remove.
 
 Install [MoSML](http://mosml.org).
 
-In the command line prompt run
+Clone the repository. Open the command line prompt in the cloned directory
+and run
 
 `"C:\Program Files\mosml\bin\mosmlc.exe" initool.sml -o initool.exe`
 
@@ -62,9 +63,9 @@ or
 
 `"C:\Program Files (x86)\mosml\bin\mosmlc.exe" initool.sml -o initool.exe`
 
-The test suite currently does not run on Windows.
-
 depending on your Windows version.
+
+The test suite currently does not run on Windows.
 
 ## License
 
