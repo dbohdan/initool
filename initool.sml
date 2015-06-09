@@ -19,6 +19,10 @@ datatype operation =
     | RemoveSection of string
     | RemoveProperty of { section : string, key : string }
     | UpdateProperty of { section : string, key : string, newValue : string }
+datatype result =
+      TextResult of string
+    | SuccessResult
+    | FailureResult
 
 exception Tokenization of string
 
@@ -107,11 +111,11 @@ fun stringifySection (sec : section) : string =
         header ^ (String.concatWith "\n" body)
     end
 
-fun outputIni (ini : ini_data) : unit =
+fun stringifyIni (ini : ini_data) : string =
     let
         val sections = map stringifySection ini
     in
-        print ((String.concatWith "\n" sections) ^ "\n")
+        (String.concatWith "\n" sections) ^ "\n"
     end
 
 fun matchOp (opr : operation) (sectionName : string) (key : string) : bool =
@@ -189,27 +193,23 @@ fun mergeIni (from: ini_data) (to: ini_data) : ini_data =
     end
 
 fun processFile filterFn filename =
-    (outputIni o filterFn o parseIni o readLines) filename
+    TextResult ((stringifyIni o filterFn o parseIni o readLines) filename)
 
 fun reportFoundInFile filterFn filename =
     let
         val selection = (filterFn o parseIni o readLines) filename
     in
         case selection of
-              [] => print "0\n"
-            | _ => print "1\n"
+              [] => FailureResult
+            | _ => SuccessResult
     end
 
 fun processArgs [] =
-        let
-            val _ = print (
-                "Usage: initool g filename [section [key [--value-only]]]\n" ^
-                "       initool e filename [section [key]]\n" ^
-                "       initool d filename section [key]\n" ^
-                "       initool s filename section key value\n")
-        in
-            OS.Process.exit(OS.Process.success)
-        end
+        TextResult
+            ("Usage: initool g filename [section [key [--value-only]]]\n" ^
+             "       initool e filename [section [key]]\n" ^
+             "       initool d filename section [key]\n" ^
+             "       initool s filename section key value\n")
     | processArgs ["g", filename] =
         processFile (fn x => x) filename
     | processArgs ["g", filename, section] =
@@ -230,16 +230,13 @@ fun processArgs [] =
         in
             case selection of
                   [{ name = _, contents = [{ key = _, value }] }] =>
-                    print (value ^ "\n")
-                | _ => print "\n"
+                    TextResult (value ^ "\n")
+                (* Treat unset properties as blank. *)
+                | _ => TextResult ""
         end
     | processArgs ["e", filename, section] =
         (* Section exists *)
-        let
-            val q = SelectSection section
-        in
-            reportFoundInFile (selectFromIni q) filename
-        end
+        reportFoundInFile (selectFromIni (SelectSection section)) filename
     | processArgs ["e", filename, section, key] =
         (* Property exists *)
         let
@@ -262,7 +259,7 @@ fun processArgs [] =
         let
             val update = [{
                 name = section,
-                contents = [{ key = key, value = value}]
+                contents = [{ key = key, value = value }]
             }]
         in
             processFile (mergeIni update) filename
@@ -270,7 +267,9 @@ fun processArgs [] =
     | processArgs _ =
         processArgs []
 
-
-val args = CommandLine.arguments()
-val _ = processArgs args
-val _ = OS.Process.exit(OS.Process.success)
+val args = CommandLine.arguments ()
+val _ = case (processArgs args) of
+      TextResult(s) => print s
+    | SuccessResult => OS.Process.exit (OS.Process.success)
+    | FailureResult => OS.Process.exit (OS.Process.failure)
+val _ = OS.Process.exit (OS.Process.success)

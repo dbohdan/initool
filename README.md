@@ -8,32 +8,55 @@ has a backwards compatible command syntax but its operation differs; rather
 than modify INI files in place it outputs the modified file text to standard
 output. See below.
 
-## Usage
+## Operation
+
+### Usage
 
 * `initool g filename [section [key [--value-only]]]` — retrieve data
 * `initool e filename section [key]` — check if a section or a property exists
-* `initool d filename section [key]` — delete section or property
-* `initool s filename section key value` — set property value
+* `initool d filename section [key]` — delete a section or a property
+* `initool s filename section key value` — set a property's value
+
+When given a valid command initool reads the INI file `filename` in its
+entirety. For the commands `g`, `d` and `s` it then outputs the file's
+contents with the desired modifications to the standard output. For `e` it
+reports whether the section or the property exists through its exit status.
 
 Top-level properties (properties not stored in a section) are accessed by
-using an empty string for the section name. For the top-level the "exist"
-command (`e`) returns whether or not there are top-level properties.
+using an empty string for the section name. The "exist" command (`e`) with an
+empty string returns whether or not there are top-level properties.
 
-When given a valid command initool reads the INI file `filename` and outputs
-its contents with the desired modifications to the standard output. To modify
-a file, in this case to replace the value of the top-level property "cache" in
-the file `settings.ini`, you can do the following:
+initool understands INI file comments (comment lines starting with ";") in the
+input but does not preserve them in the output.
+
+### Examples
+
+To modify a file, in this case to replace the value of the top-level property
+"cache" in the file `settings.ini`, you can do the following:
 
 ```sh
 initool s settings.ini '' cache 1024 > settings.ini
 ```
 
-To retrieve just the value of a property rather than the property itself use
+To retrieve only the value of a property rather than the property itself use
 the option `--value-only`:
 
 ```sh
 initool g tests/test.ini foo name1 --value-only
 ```
+
+### Nonexistent sections and properties
+
+How nonexistent sections and properties are handled depends on the command.
+
+| Command | Result | Exist status |
+|---------|--------|--------------|
+| `g` | A blank line is output. | 0 |
+| `e` | No output. | 0 if the section/property exists and 1 if not. |
+| `d` | Nothing is removed from the input in the output. | 0 |
+| `s` | The section and the property are created if needed. | 0 |
+
+### Line endings
 
 When compiled according to the instructions below initool will assume line
 endings to be LF on *nix and CR+LF on Windows. To operate on Windows files
