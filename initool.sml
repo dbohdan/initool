@@ -40,13 +40,49 @@ fun exitWithError (message : string) =
         OS.Process.exit(OS.Process.failure)
     end
 
-(* A very rough tokenizer for INI lines. *)
-fun tokenizeLine (line : string) : line_token =
+fun trimLeft (prefix : string) (s : string) : string =
+    if String.isPrefix prefix s then
+        let
+            val len = String.size prefix
+        in
+            trimLeft prefix (String.extract (s, len, NONE))
+        end
+    else s
+
+fun trimRight (suffix : string) (s : string) : string =
+    if String.isSuffix suffix s then
+        let
+            val len = String.size suffix
+            val total = String.size s
+        in
+            trimRight suffix (String.extract (s, 0, SOME(total - len)))
+        end
+    else s
+
+fun trim (s1 : string) (s2 : string) : string =
+    (trimLeft s1 o trimRight s1) s2
+
+fun trimAll (l : string list) (s : string) : string =
     let
+        fun applyAll (fl : ('a -> 'a) list) (x : 'a) =
+            case fl of
+                  [] => x
+                | f::fs => applyAll fs (f x)
+        val funs = List.map trim l
+        val trimmed = applyAll funs s
+    in
+        if trimmed = s then s else trimAll l trimmed
+    end
+
+(* A very rough tokenizer for INI lines. *)
+fun tokenizeLine (rawLine : string) : line_token =
+    let
+        val line = trimAll [" ", "\t"] rawLine
         val isComment = String.isPrefix ";" line
         val isSection =
             (String.isPrefix "[" line) andalso (String.isSuffix "]" line)
-        val propertyFields = (String.fields (fn c => c = #"=") line)
+        val fieldsWithWhitespace = String.fields (fn c => c = #"=") line
+        val propertyFields = List.map (trimAll [" ", "\t"]) fieldsWithWhitespace
     in
         case (line, isComment, isSection, propertyFields) of
               ("[]", _, _, _) => raise Tokenization("empty section name")

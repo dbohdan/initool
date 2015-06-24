@@ -45,6 +45,30 @@ the option `--value-only`:
 initool g tests/test.ini foo name1 --value-only
 ```
 
+### Whitespace
+
+initool defines whitespace as any mix of space and tab characters. The leading
+and the trailing whitespace around the section name, the key and the value is
+removed from the output.
+
+As a result the following input files are all equivalent to each other for
+initool:
+
+```
+[PHP]
+short_open_tag=Off
+```
+
+```
+[PHP]
+short_open_tag = Off
+```
+
+```
+    [PHP]
+        short_open_tag=Off
+```
+
 ### Nonexistent sections and properties
 
 How nonexistent sections and properties are handled depends on the command.
@@ -52,7 +76,7 @@ How nonexistent sections and properties are handled depends on the command.
 | Command | Result | Exit status |
 |---------|--------|--------------|
 | `g` | A blank line is output. | 0 |
-| `e` | No output. | 0 if the section/property exists and 1 if not. |
+| `e` | No output. | 0 if the section/property exists and 1 otherwise. |
 | `d` | Nothing is removed from the input in the output. | 0 |
 | `s` | The section and the property are created if needed. | 0 |
 
