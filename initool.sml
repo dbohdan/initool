@@ -3,25 +3,6 @@
  * License: MIT
  *)
 
-(* Model an INI file starting with key=value pairs. *)
-type property = { key : string, value : string }
-type section = { name : string, contents : property list }
-type ini_data = section list
-
-datatype line_token =
-      PropertyLine of property
-    | SectionLine of section
-    | CommentLine of string
-datatype operation =
-      Noop
-    | SelectSection of string
-    | SelectProperty of { section : string, key : string }
-    | RemoveSection of string
-    | RemoveProperty of { section : string, key : string }
-    | UpdateProperty of { section : string, key : string, newValue : string }
-
-exception Tokenization of string
-
 fun readLines (filename : string) : string list =
     let
         val file = TextIO.openIn filename
@@ -40,196 +21,12 @@ fun exitWithError (message : string) =
         OS.Process.exit(OS.Process.failure)
     end
 
-fun trimLeft (prefix : string) (s : string) : string =
-    if String.isPrefix prefix s then
-        let
-            val len = String.size prefix
-        in
-            trimLeft prefix (String.extract (s, len, NONE))
-        end
-    else s
-
-fun trimRight (suffix : string) (s : string) : string =
-    if String.isSuffix suffix s then
-        let
-            val len = String.size suffix
-            val total = String.size s
-        in
-            trimRight suffix (String.extract (s, 0, SOME(total - len)))
-        end
-    else s
-
-fun trim (s1 : string) (s2 : string) : string =
-    (trimLeft s1 o trimRight s1) s2
-
-fun trimAll (l : string list) (s : string) : string =
-    let
-        fun applyAll (fl : ('a -> 'a) list) (x : 'a) =
-            case fl of
-                  [] => x
-                | f::fs => applyAll fs (f x)
-        val funs = List.map trim l
-        val trimmed = applyAll funs s
-    in
-        if trimmed = s then s else trimAll l trimmed
-    end
-
-(* A very rough tokenizer for INI lines. *)
-fun tokenizeLine (rawLine : string) : line_token =
-    let
-        val line = trimAll [" ", "\t"] rawLine
-        val isComment = String.isPrefix ";" line
-        val isSection =
-            (String.isPrefix "[" line) andalso (String.isSuffix "]" line)
-        val fieldsWithWhitespace = String.fields (fn c => c = #"=") line
-        val propertyFields = List.map (trimAll [" ", "\t"]) fieldsWithWhitespace
-    in
-        case (line, isComment, isSection, propertyFields) of
-              ("[]", _, _, _) => raise Tokenization("empty section name")
-            | (_, true, _, _) => CommentLine(line)
-            | (_, false, true, _) =>
-                let
-                    val size = String.size line
-                    val sectionName = String.substring (line, 1, (size - 2))
-                in
-                    SectionLine { name = sectionName, contents = [] }
-                end
-            | (_, false, false, key::value) =>
-                (case value of
-                      [] => raise Tokenization("invalid line: " ^ line)
-                    | _ => PropertyLine {
-                        key = key,
-                        value = String.concatWith "=" value
-                    })
-            | (_, false, false, _) =>
-                raise Tokenization("invalid line: " ^ line)
-    end
-
-(* Transform a list of tokens into a simple AST for the INI file. *)
-fun makeSections (lines : line_token list) (acc : section list) : ini_data =
-    case lines of
-          [] => map
-            (fn x => { name = #name x, contents = rev(#contents x) }) (rev acc)
-        | SectionLine(sec)::xs =>
-            makeSections xs (sec::acc)
-        | PropertyLine(prop)::xs =>
-            let
-                val newAcc = case acc of
-                      (y : section)::(ys : section list) =>
-                        { name = #name y, contents = prop::(#contents y) }::ys
-                    | [] => [{ name = "", contents = [prop] }]
-            in
-                makeSections xs newAcc
-            end
-        (* Skip comment lines. *)
-        | CommentLine(comment)::xs => makeSections xs acc
-
-fun parseIni (lines : string list) : ini_data =
-    let
-        val tokenizedLines = map tokenizeLine lines
-            handle Tokenization(message) => exitWithError message
-    in
-        makeSections tokenizedLines []
-    end
-
-fun stringifySection (sec : section) : string =
-    let
-        val header = case #name sec of
-              "" => ""
-            | sectionName => "[" ^ sectionName ^ "]\n"
-        val body = List.map
-            (fn prop => (#key prop) ^ "=" ^ (#value prop)) (#contents sec)
-    in
-        header ^ (String.concatWith "\n" body)
-    end
-
-fun stringifyIni (ini : ini_data) : string =
-    let
-        val sections = map stringifySection ini
-    in
-        (String.concatWith "\n" sections) ^ "\n"
-    end
-
-fun matchOp (opr : operation) (sectionName : string) (key : string) : bool =
-    case opr of
-          Noop => true
-        | SelectSection osn =>
-            sectionName = osn
-        | SelectProperty { section = osn, key = okey } =>
-            (sectionName = osn) andalso (key = okey)
-        | RemoveSection osn =>
-            sectionName <> osn
-        | RemoveProperty { section = osn, key = okey } =>
-            (sectionName <> osn) orelse (key <> okey)
-        | UpdateProperty { section = osn, key = okey, newValue = nv } =>
-            (sectionName = osn) andalso (key = okey)
-
-fun selectFromIni (opr : operation) (ini : ini_data) : ini_data =
-    let
-        fun selectItems (opr : operation) (sec : section) : section =
-            {
-                name = (#name sec),
-                contents = List.filter
-                    (fn prop => matchOp opr (#name sec) (#key prop))
-                    (#contents sec)
-            }
-        val mapped = List.map (selectItems opr) ini
-    in
-        List.filter (fn sec => (not o null o #contents) sec) mapped
-    end
-
-(* Find replacement values in from for the existing properties in to.
- * This function makes n^2 comparisons and is hence slow.
- *)
-fun mergeSection (from : section) (to : section) : section =
-    let
-        fun findReplacements (replacementSource : property list) p1 =
-            let
-                val replacement =
-                    List.find (fn p2 => (#key p2) = (#key p1)) replacementSource
-            in
-                case replacement of
-                      SOME(p2) => p2
-                    | NONE => p1
-            end
-        fun missingIn (pl : property list) (p1 : property) : bool =
-            not (List.exists (fn p2 => (#key p2) = (#key p1)) pl)
-        val updatedItems =
-            List.map (findReplacements (#contents from)) (#contents to)
-        val newItems =
-            List.filter (missingIn updatedItems) (#contents from)
-        val mergedItems = updatedItems @ newItems
-    in
-        { name = (#name to), contents = mergedItems }
-    end
-
-(* This function makes n^2 comparisons and is hence slow. *)
-fun mergeIni (from: ini_data) (to: ini_data) : ini_data =
-    let
-        fun mergeOrKeep sec1 =
-            let
-                val secToMerge =
-                    List.find (fn sec2 => (#name sec2) = (#name sec1)) from
-            in
-                case secToMerge of
-                      SOME(sec2) => mergeSection sec2 sec1
-                    | NONE => sec1
-            end
-        fun missingIn (ini : ini_data) (sec1 : section) : bool =
-            not (List.exists (fn sec2 => (#name sec2) = (#name sec1)) ini)
-
-        val updatedIni = List.map mergeOrKeep to
-        val newSections = List.filter (missingIn updatedIni) from
-    in
-        updatedIni @ newSections
-    end
-
 fun processFile filterFn filename =
-    SOME ((stringifyIni o filterFn o parseIni o readLines) filename)
+    SOME ((Ini.stringify o filterFn o Ini.parse o readLines) filename)
 
 fun reportFoundInFile filterFn filename =
     let
-        val selection = (filterFn o parseIni o readLines) filename
+        val selection = (filterFn o Ini.parse o readLines) filename
     in
         case selection of
               [] => NONE
@@ -241,24 +38,31 @@ fun processArgs [] =
             ("Usage: initool g filename [section [key [--value-only]]]\n" ^
              "       initool e filename [section [key]]\n" ^
              "       initool d filename section [key]\n" ^
-             "       initool s filename section key value\n")
+             "       initool s filename section key value\n" ^
+             "       initool v\n")
+    | processArgs ["v"] =
+        let
+            val version = "0.5.0"
+        in
+            SOME (version ^ "\n")
+        end
     | processArgs ["g", filename] =
         processFile (fn x => x) filename
     | processArgs ["g", filename, section] =
         (* Get section *)
-        processFile (selectFromIni (SelectSection section)) filename
+        processFile (Ini.select (Ini.SelectSection section)) filename
     | processArgs ["g", filename, section, key] =
         (* Get property *)
         let
-            val q = SelectProperty { section = section, key = key }
+            val q = Ini.SelectProperty { section = section, key = key }
         in
-            processFile (selectFromIni q) filename
+            processFile (Ini.select q) filename
         end
     | processArgs ["g", filename, section, key, "--value-only"] =
         (* Get only the value *)
         let
-            val q = SelectProperty { section = section, key = key }
-            val selection = ((selectFromIni q) o parseIni o readLines) filename
+            val q = Ini.SelectProperty { section = section, key = key }
+            val selection = ((Ini.select q) o Ini.parse o readLines) filename
         in
             case selection of
                   [{ name = _, contents = [{ key = _, value }] }] =>
@@ -268,23 +72,23 @@ fun processArgs [] =
         end
     | processArgs ["e", filename, section] =
         (* Section exists *)
-        reportFoundInFile (selectFromIni (SelectSection section)) filename
+        reportFoundInFile (Ini.select (Ini.SelectSection section)) filename
     | processArgs ["e", filename, section, key] =
         (* Property exists *)
         let
-            val q = SelectProperty { section = section, key = key }
+            val q = Ini.SelectProperty { section = section, key = key }
         in
-            reportFoundInFile (selectFromIni q) filename
+            reportFoundInFile (Ini.select q) filename
         end
     | processArgs ["d", filename, section] =
         (* Delete section *)
-        processFile (selectFromIni (RemoveSection section)) filename
+        processFile (Ini.select (Ini.RemoveSection section)) filename
     | processArgs ["d", filename, section, key] =
         (* Delete property *)
         let
-            val q = RemoveProperty { section = section, key = key }
+            val q = Ini.RemoveProperty { section = section, key = key }
         in
-            processFile (selectFromIni q) filename
+            processFile (Ini.select q) filename
         end
     | processArgs ["s", filename, section, key, value] =
         (* Set value *)
@@ -294,13 +98,15 @@ fun processArgs [] =
                 contents = [{ key = key, value = value }]
             }]
         in
-            processFile (mergeIni update) filename
+            processFile (Ini.merge update) filename
         end
     | processArgs _ =
         processArgs []
 
 val args = CommandLine.arguments ()
-val _ = case (processArgs args) of
+val result = processArgs args
+    handle Ini.Tokenization(message) => exitWithError message
+val _ = case result of
       SOME(s) => print s
     | NONE => OS.Process.exit (OS.Process.failure)
 val _ = OS.Process.exit (OS.Process.success)

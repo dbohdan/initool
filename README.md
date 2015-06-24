@@ -16,6 +16,7 @@ output. See below.
 * `initool e filename section [key]` — check if a section or a property exists
 * `initool d filename section [key]` — delete a section or a property
 * `initool s filename section key value` — set a property's value
+* `initool v` — print the version number
 
 When given a valid command initool first reads the INI file `filename` in its
 entirety. For the commands `g`, `d` and `s` it then outputs the file's
@@ -66,7 +67,7 @@ short_open_tag = Off
 
 ```
     [PHP]
-        short_open_tag=Off
+        short_open_tag   =     Off
 ```
 
 ### Nonexistent sections and properties
@@ -85,7 +86,7 @@ How nonexistent sections and properties are handled depends on the command.
 When compiled according to the instructions below initool will assume line
 endings to be LF on *nix and CR+LF on Windows. To operate on Windows files
 from *nix convert the files' line endings to LF and then back. You can
-accomplish this, e.g, using [sed](http://stackoverflow.com/a/2613834/3142963).
+accomplish this, e.g, [using sed](http://stackoverflow.com/a/2613834/3142963).
 
 ## Compiling and installation
 
@@ -101,18 +102,9 @@ will be installed in `/usr/local/bin`. Run `sudo make uninstall` to remove it.
 
 Install [MoSML](http://mosml.org).
 
-Clone the repository. Open the command line prompt in the cloned directory
-and run
+Clone the repository and run `build.cmd` from its directory.
 
-`"C:\Program Files\mosml\bin\mosmlc.exe" initool.sml -o initool.exe`
-
-or
-
-`"C:\Program Files (x86)\mosml\bin\mosmlc.exe" initool.sml -o initool.exe`
-
-depending on your Windows version.
-
-The test suite currently does not run on Windows.
+The test suite currently does not work on Windows.
 
 ## License
 
