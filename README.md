@@ -1,5 +1,7 @@
 # initool
 
+[![Build Status](https://travis-ci.org/dbohdan/initool.svg?branch=master)](https://travis-ci.org/dbohdan/initool)
+
 initool lets you manipulate the contents of INI files from the command line.
 
 It is a rewrite of an earlier program by the author called "iniparse", which
