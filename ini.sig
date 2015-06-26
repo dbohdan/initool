@@ -1,7 +1,10 @@
 signature INI =
     sig
         type property = {key:string, value:string}
-        type section = {contents:property list, name:string}
+        datatype item =
+              Property of property
+            | Comment of string
+        type section = {contents:item list, name:string}
         type ini_data = section list
         datatype line_token =
               CommentLine of string
@@ -18,11 +21,11 @@ signature INI =
         val tokenizeLine : string -> line_token
         val makeSections : line_token list
             -> section list
-            -> {contents:property list, name:string} list
+            -> {contents:item list, name:string} list
         val parse : string list -> ini_data
         val stringifySection : section -> string
         val stringify : ini_data -> string
-        val matchOp : operation -> string -> string -> bool
+        val matchOp : operation -> section -> item -> bool
         val select : operation -> ini_data -> ini_data
         val mergeSection : section -> section -> section
         val merge : ini_data -> ini_data -> ini_data

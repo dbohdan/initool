@@ -27,8 +27,11 @@ Top-level properties (properties not stored in a section) are accessed by
 using an empty string for the section name. The "exist" command (`e`) with an
 empty string returns whether or not there are top-level properties.
 
+The order the properties appear in is preserved. A new property is added after
+the last property in its section.
+
 initool understands INI file comments (comment lines starting with ";") in the
-input but does not preserve them in the output.
+input and preserves them in the output.
 
 ### Examples
 

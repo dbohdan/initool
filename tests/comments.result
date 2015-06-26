@@ -1,0 +1,64 @@
+-- Get all
+[PHP]
+;;;;;;;;;;;;;;;;;;;
+; About php.ini   ;
+;;;;;;;;;;;;;;;;;;;
+; PHP's initialization file.
+engine=On
+short_open_tag=Off
+[test]
+
+-- Get [PHP]
+[PHP]
+;;;;;;;;;;;;;;;;;;;
+; About php.ini   ;
+;;;;;;;;;;;;;;;;;;;
+; PHP's initialization file.
+engine=On
+short_open_tag=Off
+-- Get [test]
+
+-- Delete [PHP]
+
+-- Delete engine in [PHP]
+[PHP]
+;;;;;;;;;;;;;;;;;;;
+; About php.ini   ;
+;;;;;;;;;;;;;;;;;;;
+; PHP's initialization file.
+short_open_tag=Off
+-- Delete both keys in [PHP]
+[PHP]
+;;;;;;;;;;;;;;;;;;;
+; About php.ini   ;
+;;;;;;;;;;;;;;;;;;;
+; PHP's initialization file.
+-- Delete [test]
+[PHP]
+;;;;;;;;;;;;;;;;;;;
+; About php.ini   ;
+;;;;;;;;;;;;;;;;;;;
+; PHP's initialization file.
+engine=On
+short_open_tag=Off
+-- Set k=v in [PHP]
+[PHP]
+;;;;;;;;;;;;;;;;;;;
+; About php.ini   ;
+;;;;;;;;;;;;;;;;;;;
+; PHP's initialization file.
+engine=On
+short_open_tag=Off
+k=v
+[test]
+
+-- Set k=v in [test]
+[PHP]
+;;;;;;;;;;;;;;;;;;;
+; About php.ini   ;
+;;;;;;;;;;;;;;;;;;;
+; PHP's initialization file.
+engine=On
+short_open_tag=Off
+[test]
+k=v

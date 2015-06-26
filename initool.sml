@@ -42,7 +42,7 @@ fun processArgs [] =
              "       initool v\n")
     | processArgs ["v"] =
         let
-            val version = "0.5.0"
+            val version = "0.6.0"
         in
             SOME (version ^ "\n")
         end
@@ -65,7 +65,8 @@ fun processArgs [] =
             val selection = ((Ini.select q) o Ini.parse o readLines) filename
         in
             case selection of
-                  [{ name = _, contents = [{ key = _, value }] }] =>
+                  [{ name = _,
+                            contents = [Ini.Property { key = _, value }] }] =>
                     SOME (value ^ "\n")
                 (* Treat unset properties as blank. *)
                 | _ => SOME ""
@@ -95,7 +96,7 @@ fun processArgs [] =
         let
             val update = [{
                 name = section,
-                contents = [{ key = key, value = value }]
+                contents = [Ini.Property { key = key, value = value }]
             }]
         in
             processFile (Ini.merge update) filename

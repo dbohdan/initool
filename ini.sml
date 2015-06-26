@@ -7,7 +7,10 @@ structure Ini :> INI =
     struct
         (* Model an INI file starting with key=value pairs. *)
         type property = { key : string, value : string }
-        type section = { name : string, contents : property list }
+        datatype item =
+              Property of property
+            | Comment of string
+        type section = { name : string, contents : item list }
         type ini_data = section list
 
         datatype line_token =
@@ -20,8 +23,11 @@ structure Ini :> INI =
             | SelectProperty of { section : string, key : string }
             | RemoveSection of string
             | RemoveProperty of { section : string, key : string }
-            | UpdateProperty of { section : string, key : string,
-                                  newValue : string }
+            | UpdateProperty of {
+                    section : string,
+                    key : string,
+                    newValue : string
+                }
 
         exception Tokenization of string
 
@@ -64,24 +70,30 @@ structure Ini :> INI =
         (* Transform a list of tokens into a simple AST for the INI file. *)
         fun makeSections (lines : line_token list)
                          (acc : section list) : ini_data =
-            case lines of
-                  [] => map
-                    (fn x => { name = #name x, contents = rev(#contents x) })
-                    (rev acc)
-                | SectionLine(sec)::xs =>
-                    makeSections xs (sec::acc)
-                | PropertyLine(prop)::xs =>
-                    let
-                        val newAcc = case acc of
-                              (y : section)::(ys : section list) =>
-                                { name = #name y,
-                                  contents = prop::(#contents y) }::ys
-                            | [] => [{ name = "", contents = [prop] }]
-                    in
-                        makeSections xs newAcc
-                    end
-                (* Skip comment lines. *)
-                | CommentLine(comment)::xs => makeSections xs acc
+            let
+                fun addItem (newItem : item) (sl : section list) =
+                    case sl of
+                          (y : section)::ys =>
+                            {
+                                name = #name y,
+                                contents = newItem::(#contents y)
+                            }::ys
+                        | [] => [{ name = "", contents = [newItem] }]
+            in
+                case lines of
+                      [] => map
+                        (fn x => {
+                            name = #name x,
+                            contents = rev(#contents x)
+                        })
+                        (rev acc)
+                    | SectionLine(sec)::xs =>
+                        makeSections xs (sec::acc)
+                    | PropertyLine(prop)::xs =>
+                        makeSections xs (addItem (Property prop) acc)
+                    | CommentLine(comment)::xs =>
+                        makeSections xs (addItem (Comment comment) acc)
+            end
 
         fun parse (lines : string list) : ini_data =
             let
@@ -92,12 +104,14 @@ structure Ini :> INI =
 
         fun stringifySection (sec : section) : string =
             let
+                fun stringifyItem (i : item) =
+                    case i of
+                          Property prop => (#key prop) ^ "=" ^ (#value prop)
+                        | Comment c => c
                 val header = case #name sec of
                       "" => ""
                     | sectionName => "[" ^ sectionName ^ "]\n"
-                val body = List.map
-                    (fn prop => (#key prop) ^ "=" ^ (#value prop))
-                    (#contents sec)
+                val body = List.map stringifyItem (#contents sec)
             in
                 header ^ (String.concatWith "\n" body)
             end
@@ -109,29 +123,51 @@ structure Ini :> INI =
                 (String.concatWith "\n" sections) ^ "\n"
             end
 
-        fun matchOp (opr : operation) (sectionName : string)
-                    (key : string) : bool =
-            case opr of
-                  Noop => true
-                | SelectSection osn =>
-                    sectionName = osn
-                | SelectProperty { section = osn, key = okey } =>
-                    (sectionName = osn) andalso (key = okey)
-                | RemoveSection osn =>
-                    sectionName <> osn
-                | RemoveProperty { section = osn, key = okey } =>
-                    (sectionName <> osn) orelse (key <> okey)
-                | UpdateProperty { section = osn, key = okey, newValue = nv } =>
-                    (sectionName = osn) andalso (key = okey)
+        (* Say whether the item i in section sec should be returned under
+         * the operation opr.
+         *)
+        fun matchOp (opr : operation) (sec : section) (i : item) : bool =
+            let
+                val sectionName = #name sec
+            in
+                case (opr, i) of
+                      (Noop, _) => true
+                    | (SelectSection osn, _) =>
+                        sectionName = osn
+                    | (SelectProperty { section = osn, key = okey },
+                            Property { key, value = _ }) =>
+                        (sectionName = osn) andalso (key = okey)
+                    | (SelectProperty { section = osn, key = okey },
+                            Comment c) =>
+                        false
+                    | (RemoveSection osn, _) =>
+                        sectionName <> osn
+                    | (RemoveProperty { section = osn, key = okey },
+                            Property { key, value = _ }) =>
+                        (sectionName <> osn) orelse (key <> okey)
+                    | (RemoveProperty { section = osn, key = okey },
+                            Comment _) =>
+                        true
+                    | (UpdateProperty {
+                                section = osn,
+                                key = okey,
+                                newValue = nv
+                            }, Property { key, value = _ }) =>
+                        (sectionName = osn) andalso (key = okey)
+                    | (UpdateProperty {
+                                section = osn,
+                                key = okey,
+                                newValue = nv
+                            }, Comment _) =>
+                        false
+            end
 
         fun select (opr : operation) (ini : ini_data) : ini_data =
             let
                 fun selectItems (opr : operation) (sec : section) : section =
                     {
                         name = (#name sec),
-                        contents = List.filter
-                            (fn prop => matchOp opr (#name sec) (#key prop))
-                            (#contents sec)
+                        contents = List.filter (matchOp opr sec) (#contents sec)
                     }
                 val mapped = List.map (selectItems opr) ini
             in
@@ -143,18 +179,21 @@ structure Ini :> INI =
          *)
         fun mergeSection (from : section) (to : section) : section =
             let
-                fun findReplacements (replacementSource : property list) p1 =
+                fun itemsEqual (i1 : item) (i2 : item) =
+                    case (i1, i2) of
+                          (Property p1, Property p2) => (#key p2) = (#key p1)
+                        | (_, _) => false
+                fun findReplacements (replacementSource : item list) p1 =
                     let
                         val replacement =
-                            List.find (fn p2 => (#key p2) = (#key p1))
-                                      replacementSource
+                            List.find (itemsEqual p1) replacementSource
                     in
                         case replacement of
                               SOME(p2) => p2
                             | NONE => p1
                     end
-                fun missingIn (pl : property list) (p1 : property) : bool =
-                    not (List.exists (fn p2 => (#key p2) = (#key p1)) pl)
+                fun missingIn (pl : item list) (p1 : item) : bool =
+                    not (List.exists (itemsEqual p1) pl)
                 val updatedItems =
                     List.map (findReplacements (#contents from)) (#contents to)
                 val newItems =
