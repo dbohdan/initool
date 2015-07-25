@@ -1,0 +1,2 @@
+[sql CustomerById]
+Sql="SELECT * FROM Customers WHERE CustomerID = ?"

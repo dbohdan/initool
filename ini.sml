@@ -34,17 +34,24 @@ structure Ini :> INI =
         (* A very rough tokenizer for INI lines. *)
         fun tokenizeLine (rawLine : string) : line_token =
             let
+                fun split c s =
+                    let
+                        val fields = String.fields (fn ch => ch = c) s
+                    in
+                        case fields of
+                              [] => []
+                            | x::[] => [x]
+                            | x::xs => [x, String.concatWith (String.str c) xs]
+                    end
                 val trimWhitespace = StringTrim.all [" ", "\t"]
                 val line = trimWhitespace rawLine
                 val isComment = String.isPrefix ";" line
                 val isSection =
                     (String.isPrefix "[" line) andalso
                     (String.isSuffix "]" line)
-                val fieldsWithWhitespace = String.fields (fn c => c = #"=") line
-                val propertyFields =
-                    List.map trimWhitespace fieldsWithWhitespace
+                val keyAndValue = List.map trimWhitespace (split #"=" line)
             in
-                case (line, isComment, isSection, propertyFields) of
+                case (line, isComment, isSection, keyAndValue) of
                       ("[]", _, _, _) =>
                         raise Tokenization("empty section name")
                     | (_, true, _, _) => CommentLine(line)
