@@ -42,7 +42,7 @@ fun processArgs [] =
              "       initool v\n")
     | processArgs ["v"] =
         let
-            val version = "0.6.0"
+            val version = "0.6.1"
         in
             SOME (version ^ "\n")
         end
