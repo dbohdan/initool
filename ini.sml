@@ -176,9 +176,17 @@ structure Ini :> INI =
                         name = (#name sec),
                         contents = List.filter (matchOp opr sec) (#contents sec)
                     }
-                val mapped = List.map (selectItems opr) ini
+                val sectionFiltered =
+                    case opr of
+                      SelectSection osn =>
+                        List.filter (fn sec => (#name sec) = osn) ini
+                    | SelectProperty { section = osn, key = _ } =>
+                        List.filter (fn sec => (#name sec) = osn) ini
+                    | RemoveSection osn =>
+                        List.filter (fn sec => (#name sec) <> osn) ini
+                    | _ => ini
             in
-                List.filter (fn sec => (not o null o #contents) sec) mapped
+                List.map (selectItems opr) sectionFiltered
             end
 
         (* Find replacement values in from for the existing properties in to.

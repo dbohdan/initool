@@ -24,15 +24,6 @@ fun exitWithError (message : string) =
 fun processFile filterFn filename =
     SOME ((Ini.stringify o filterFn o Ini.parse o readLines) filename)
 
-fun reportFoundInFile filterFn filename =
-    let
-        val selection = (filterFn o Ini.parse o readLines) filename
-    in
-        case selection of
-              [] => NONE
-            | _ => SOME ""
-    end
-
 fun processArgs [] =
         SOME
             ("Usage: initool g filename [section [key [--value-only]]]\n" ^
@@ -42,7 +33,7 @@ fun processArgs [] =
              "       initool v\n")
     | processArgs ["v"] =
         let
-            val version = "0.6.1"
+            val version = "0.7.0"
         in
             SOME (version ^ "\n")
         end
@@ -73,13 +64,21 @@ fun processArgs [] =
         end
     | processArgs ["e", filename, section] =
         (* Section exists *)
-        reportFoundInFile (Ini.select (Ini.SelectSection section)) filename
+        let
+            val q = Ini.SelectSection section
+        in
+            case (Ini.select q o Ini.parse o readLines) filename of
+                  [] => NONE
+                | _ => SOME ""
+        end
     | processArgs ["e", filename, section, key] =
         (* Property exists *)
         let
             val q = Ini.SelectProperty { section = section, key = key }
         in
-            reportFoundInFile (Ini.select q) filename
+            case (Ini.select q o Ini.parse o readLines) filename of
+                  [{contents = [Ini.Property { key = key, value = _ }], name = _ }] => SOME ""
+                | _ => NONE
         end
     | processArgs ["d", filename, section] =
         (* Delete section *)

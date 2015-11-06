@@ -17,8 +17,10 @@ short_open_tag=Off
 engine=On
 short_open_tag=Off
 -- Get [test]
+[test]
 
 -- Delete [PHP]
+[test]
 
 -- Delete engine in [PHP]
 [PHP]
@@ -27,12 +29,16 @@ short_open_tag=Off
 ;;;;;;;;;;;;;;;;;;;
 ; PHP's initialization file.
 short_open_tag=Off
+[test]
+
 -- Delete both keys in [PHP]
 [PHP]
 ;;;;;;;;;;;;;;;;;;;
 ; About php.ini   ;
 ;;;;;;;;;;;;;;;;;;;
 ; PHP's initialization file.
+[test]
+
 -- Delete [test]
 [PHP]
 ;;;;;;;;;;;;;;;;;;;
