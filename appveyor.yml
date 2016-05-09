@@ -1,4 +1,4 @@
 version: "0.7.0.{build}"
 install:
-  - ps: (new-object net.webclient).DownloadFile('https://github.com/kfl/mosml/releases/download/ver-2.10.1/mosml-setup-2.10.1.exe', 'mosml-setup.exe')
-  - cmd: mosml-setup.exe /VERYSILENT
+  - ps: Invoke-WebRequest https://github.com/kfl/mosml/releases/download/ver-2.10.1/mosml-setup-2.10.1.exe -OutFile mosml-setup.exe
+  - cmd: mosml-setup.exe /VERYSILENT /SUPPRESSMSGBOXES
