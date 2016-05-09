@@ -7,12 +7,14 @@ if exist %mosmlc2% set mosmlc=%mosmlc2%
 
 if not exist %mosmlc% (
     echo Error: mosmlc.exe not found
-    goto end
+    exit /b 1
 )
 
 echo on
 del *.ui *.uo
 %mosmlc% -toplevel stringtrim.sml ini-sig.sml ini.sml initool.sml -o initool.exe
+
 :end
+if not !%1%!==!/s! pause
 @echo on
-@pause
+@exit /b 0
