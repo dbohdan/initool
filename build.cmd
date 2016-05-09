@@ -14,7 +14,5 @@ echo on
 del *.ui *.uo
 %mosmlc% -toplevel stringtrim.sml ini-sig.sml ini.sml initool.sml -o initool.exe
 
-:end
-if not !%1%!==!/s! pause
-@echo on
+@if not !%1%!==!/s! pause
 @exit /b 0
