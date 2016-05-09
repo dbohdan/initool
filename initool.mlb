@@ -1,6 +1,6 @@
 $(SML_LIB)/basis/basis.mlb
 
 stringtrim.sml
-ini.sig
+ini-sig.sml
 ini.sml
 initool.sml

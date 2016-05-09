@@ -12,9 +12,7 @@ if not exist %mosmlc% (
 
 echo on
 del *.ui *.uo
-rename ini.sig ini-sig.sml
 %mosmlc% -toplevel stringtrim.sml ini-sig.sml ini.sml initool.sml -o initool.exe
-rename ini-sig.sml ini.sig
 :end
 @echo on
 @pause
