@@ -15,16 +15,50 @@ if not exist %mosmlc% (
 
 rem Process the command line arguments.
 set flag_batch=0
+set flag_package=0
 for %%a in (%*) do (
-    if !%%a!==!/batch! set flag_batch=1
+    if "%%a"=="/batch" set flag_batch=1
+    if "%%a"=="/package" set flag_package=1
 )
 
 rem Build initool.
 echo on
 del *.ui *.uo
 %mosmlc% -toplevel stringtrim.sml ini-sig.sml ini.sml initool.sml -o initool.exe
-@if errorlevel 1 exit /b 1
+@echo off
+if errorlevel 1 exit /b 1
 
-@rem Perform optional actions based on the flags that are set.
-@if !%flag_batch%!==!0! pause
-@exit /b 0
+rem Perform optional actions based on the flags that are set.
+if "%flag_package%"=="1" goto package
+:package_return
+if "%flag_batch%"=="0" pause
+exit /b 0
+
+rem ----------------------------------------------------------------------------
+
+rem The packaging subroutine. Packages camlrt.dll and initool.exe in a ZIP
+rem archive. Requires that 7z.exe be available. Includes the current commit
+rem in the archive's filename if git.exe is.
+:package
+echo on
+copy "%mosml%\bin\camlrt.dll" .
+@echo off
+
+rem Read the initool version.
+set /p version=<VERSION
+
+rem Get the current commit's SHA-1.
+set commit=current
+git rev-parse HEAD > current-commit
+if not errorlevel 1 set /p commit=<current-commit
+del current-commit > nul
+
+rem Create the ZIP archive.
+set archive=initool-v%version%-%commit:~0,7%.zip
+
+echo on
+7z a %archive% camlrt.dll initool.exe
+@echo off
+if errorlevel 1 exit /b 1
+
+goto package_return
