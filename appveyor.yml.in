@@ -3,4 +3,6 @@ install:
   - ps: Invoke-WebRequest https://github.com/kfl/mosml/releases/download/ver-2.10.1/mosml-setup-2.10.1.exe -OutFile mosml-setup.exe
   - cmd: mosml-setup.exe /VERYSILENT /SUPPRESSMSGBOXES
 build_script:
-  - cmd: build.cmd /batch
+  - cmd: build.cmd /batch /package
+artifacts:
+  - path: '*.zip'
