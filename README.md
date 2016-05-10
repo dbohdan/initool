@@ -1,6 +1,7 @@
 # initool
 
-[![Build Status](https://travis-ci.org/dbohdan/initool.svg?branch=master)](https://travis-ci.org/dbohdan/initool)
+[![Travis CI build status](https://travis-ci.org/dbohdan/initool.svg?branch=master)](https://travis-ci.org/dbohdan/initool)&nbsp;
+[![AppVeyor CI build status](https://ci.appveyor.com/api/projects/status/github/dbohdan/initool?branch=master&svg=true)](https://ci.appveyor.com/project/dbohdan/initool)
 
 initool lets you manipulate the contents of INI files from the command line.
 
