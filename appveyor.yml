@@ -4,5 +4,7 @@ install:
   - cmd: mosml-setup.exe /VERYSILENT /SUPPRESSMSGBOXES
 build_script:
   - cmd: build.cmd /batch /package
+test_script:
+  - cmd: initool.exe v
 artifacts:
   - path: '*.zip'
