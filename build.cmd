@@ -54,7 +54,7 @@ if not errorlevel 1 set /p commit=<current-commit
 del current-commit > nul
 
 rem Create the ZIP archive.
-set archive=initool-v%version%-%commit:~0,7%.zip
+set archive=initool-v%version%-%commit:~0,7%-win32.zip
 
 echo on
 7z a %archive% camlrt.dll initool.exe
