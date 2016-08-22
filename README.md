@@ -38,11 +38,19 @@ input and preserves them in the output.
 
 ### Examples
 
-To modify a file, in this case to replace the value of the top-level property
-"cache" in the file `settings.ini`, you can do the following:
+To modify a file on \*nix, in this case to replace the value of the top-level
+property "cache" in the file `settings.ini`, you can do the following:
 
 ```sh
 initool s settings.ini '' cache 1024 > settings.ini
+```
+
+On Windows you should instead redirect initool's output to a temporary file and
+then replace the original with it:
+
+```batch
+initool s settings.ini "" cache 1024 > temporary.ini
+move /y temporary.ini settings.ini
 ```
 
 To retrieve only the value of a property rather than the property itself use
