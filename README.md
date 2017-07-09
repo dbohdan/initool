@@ -100,7 +100,16 @@ How nonexistent sections and properties are handled depends on the command.
 When compiled according to the instructions below initool will assume line
 endings to be LF on *nix and CR+LF on Windows. To operate on Windows files
 from *nix convert the files' line endings to LF and then back. You can
-accomplish this, e.g, [using sed](http://stackoverflow.com/a/2613834/3142963).
+accomplish this, e.g, [using sed](http://stackoverflow.com/a/2613834).
+
+### Text encodings
+
+initool is encoding-naive and assumes one character is one byte. It correctly
+processes UTF-8-encoded files when given UTF-8 command line arguments but
+can't open files in UTF-16 or UTF-32. On Windows it will receive the command
+line arguments in the encoding for your system's language for non-Unicode
+programs (e.g., [Windows-1252](https://en.wikipedia.org/wiki/Windows-1252)),
+which limits what you can do with UTF-8-encoded files.
 
 ## Compiling and installation
 
