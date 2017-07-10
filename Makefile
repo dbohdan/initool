@@ -8,7 +8,7 @@ VERSION: initool.sml
 test: initool
 	sh test.sh
 clean:
-	rm appveyor.yml initool VERSION
+	-rm appveyor.yml initool VERSION
 install: initool
 	cp initool /usr/local/bin/initool
 uninstall:
