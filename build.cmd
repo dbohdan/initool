@@ -2,9 +2,11 @@
 rem Detect the path to mosmlc.exe and MOSMLLIB.
 set mosml1=C:\Program Files\mosml
 set mosml2=C:\Program Files (x86)\mosml
+set mosml3=C:\mosml
 
 if exist "%mosml1%\bin\mosmlc.exe" set mosml=%mosml1%
 if exist "%mosml2%\bin\mosmlc.exe" set mosml=%mosml2%
+if exist "%mosml3%\bin\mosmlc.exe" set mosml=%mosml3%
 set mosmlc="%mosml%\bin\mosmlc.exe"
 set mosmllib=%mosml%\lib\mosml
 
