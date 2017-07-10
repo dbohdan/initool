@@ -1,4 +1,4 @@
-all: appveyor.yml initool VERSION
+all: appveyor.yml test VERSION
 initool: initool.mlb stringtrim.sml ini-sig.sml ini.sml initool.sml
 	mlton initool.mlb
 appveyor.yml: appveyor.yml.in VERSION
