@@ -101,9 +101,9 @@ How nonexistent sections and properties are handled depends on the command.
 ### Line endings
 
 When compiled according to the instructions below, initool will assume line
-endings to be LF on *nix and CR+LF on Windows. To operate on Windows files from
-*nix, convert the files' line endings to LF and then back. You can accomplish
-this, e.g, [using sed](http://stackoverflow.com/a/2613834).
+endings to be LF on *nix and either LF or CR+LF on Windows. To operate on
+Windows files from *nix, convert the files' line endings to LF and then back.
+You can accomplish this, e.g., [using sed](http://stackoverflow.com/a/2613834).
 
 ### Text encodings
 
