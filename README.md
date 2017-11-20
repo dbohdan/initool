@@ -53,7 +53,7 @@ move /y temporary.ini settings.ini
 ```
 
 To retrieve only the value of a property rather than the whole property
-(section, key, and value), use the option `--value-only`:
+(section, key, and value), use the flag `--value-only`:
 
 ```sh
 $ initool g tests/test.ini foo name1
@@ -93,7 +93,7 @@ How nonexistent sections and properties are handled depends on the command.
 
 | Command | Result | Exit status |
 |---------|--------|--------------|
-| `g` | A blank line is output. | 0 |
+| `g` | With the flag `--value-only` initool produces no output. Without it, a blank line is printed if the section doesn't exist. The section name followed by a blank line is printed if the section exists but the property does not. | 0 |
 | `e` | No output. | 0 if the section/property exists and 1 otherwise. |
 | `d` | Nothing is removed from the input in the output. | 0 |
 | `s` | The section and the property are created if needed. | 0 |
