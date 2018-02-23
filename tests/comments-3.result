@@ -1,0 +1,16 @@
+# comment 1
+a1=b1
+# comment 2
+a2=b2
+# comment 3
+a3=b3
+# comment 4
+-----
+# comment 1
+; comment 2
+# comment 3
+foo=bar
+; comment 4
+; comment 5
+# comment 6
+# comment 7

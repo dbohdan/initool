@@ -45,7 +45,9 @@ structure Ini :> INI =
           end
         val trimWhitespace = StringTrim.all [" ", "\t"]
         val line = trimWhitespace rawLine
-        val isComment = String.isPrefix ";" line
+        val isComment =
+          (String.isPrefix ";" line) orelse
+          (String.isPrefix "#" line)
         val isSection =
           (String.isPrefix "[" line) andalso
           (String.isSuffix "]" line)
