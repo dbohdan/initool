@@ -1,4 +1,4 @@
-version: "0.8.0.{build}"
+version: "0.9.0.{build}"
 install:
   - cmd: mkdir c:\mosml
   - ps: Invoke-WebRequest "https://bintray.com/dbohdan/mosml/download_file?file_path=mosml-2.10.1-win32-bin.7z" -OutFile c:\mosml\mosml.7z

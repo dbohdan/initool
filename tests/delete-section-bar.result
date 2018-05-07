@@ -2,6 +2,7 @@
 name1=foo1
 name2=foo2
 name3="repeat value"
+
 [baz]
 name1=baz1
 name2=baz2

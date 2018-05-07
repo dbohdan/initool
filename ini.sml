@@ -9,14 +9,16 @@ structure Ini :> INI =
     type property = { key : string, value : string }
     datatype item =
         Property of property
+      | Empty
       | Comment of string
     type section = { name : string, contents : item list }
     type ini_data = section list
 
     datatype line_token =
-        PropertyLine of property
+        CommentLine of string
+      | EmptyLine
+      | PropertyLine of property
       | SectionLine of section
-      | CommentLine of string
     datatype operation =
         Noop
       | SelectSection of string
@@ -65,9 +67,11 @@ structure Ini :> INI =
             in
               SectionLine { name = sectionName, contents = [] }
             end
+          | ("", false, false, _) =>
+            EmptyLine
           | (_, false, false, key::value) =>
             (case value of
-                [] => raise Tokenization("invalid line: " ^ line)
+                [] => raise Tokenization("invalid line: \"" ^ line ^ "\"")
               | _ => PropertyLine {
                 key = key,
                 value = String.concatWith "=" value
@@ -102,6 +106,8 @@ structure Ini :> INI =
             makeSections xs (addItem (Property prop) acc)
           | CommentLine(comment)::xs =>
             makeSections xs (addItem (Comment comment) acc)
+          | EmptyLine::xs =>
+            makeSections xs (addItem Empty acc)
       end
 
     fun parse (lines : string list) : ini_data =
@@ -117,6 +123,7 @@ structure Ini :> INI =
           case i of
               Property prop => (#key prop) ^ "=" ^ (#value prop)
             | Comment c => c
+            | Empty => ""
         val header = case #name sec of
             "" => ""
           | sectionName => "[" ^ sectionName ^ "]\n"
@@ -149,6 +156,9 @@ structure Ini :> INI =
           | (SelectProperty { section = osn, key = okey },
               Comment c) =>
             false
+          | (SelectProperty { section = osn, key = okey },
+              Empty) =>
+            false
           | (RemoveSection osn, _) =>
             sectionName <> osn
           | (RemoveProperty { section = osn, key = okey },
@@ -156,6 +166,9 @@ structure Ini :> INI =
             (sectionName <> osn) orelse (key <> okey)
           | (RemoveProperty { section = osn, key = okey },
               Comment _) =>
+            true
+          | (RemoveProperty { section = osn, key = okey },
+              Empty) =>
             true
           | (UpdateProperty {
                 section = osn,
@@ -168,6 +181,12 @@ structure Ini :> INI =
                 key = okey,
                 newValue = nv
               }, Comment _) =>
+            false
+          | (UpdateProperty {
+                section = osn,
+                key = okey,
+                newValue = nv
+              }, Empty) =>
             false
       end
 
@@ -211,11 +230,24 @@ structure Ini :> INI =
           end
         fun missingIn (pl : item list) (p1 : item) : bool =
           not (List.exists (itemsEqual p1) pl)
+        fun addBeforeEmpty (from : item list) (to : item list)  : item list =
+          let
+            fun emptyCount l i =
+              case l of
+                  Empty::xs => emptyCount xs (i + 1)
+                | _ => i
+            val revTo = List.rev to
+            val revToEmptyCount = emptyCount revTo 0
+          in
+            List.rev (List.drop (revTo, revToEmptyCount)) @
+            from @
+            List.take (revTo, revToEmptyCount)
+          end
         val updatedItems =
           List.map (findReplacements (#contents from)) (#contents to)
         val newItems =
           List.filter (missingIn updatedItems) (#contents from)
-        val mergedItems = updatedItems @ newItems
+        val mergedItems = addBeforeEmpty newItems updatedItems
       in
         { name = (#name to), contents = mergedItems }
       end

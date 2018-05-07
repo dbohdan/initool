@@ -2,12 +2,14 @@ signature INI =
   sig
     type property = {key:string, value:string}
     datatype item =
-        Property of property
-      | Comment of string
+        Comment of string
+      | Empty
+      | Property of property
     type section = {contents:item list, name:string}
     type ini_data = section list
     datatype line_token =
         CommentLine of string
+      | EmptyLine
       | PropertyLine of property
       | SectionLine of section
     datatype operation =

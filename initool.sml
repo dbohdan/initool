@@ -8,8 +8,12 @@ fun readLines (filename : string) : string list =
     val file = TextIO.openIn filename
     val contents = TextIO.inputAll file
     val _ = TextIO.closeIn file
+    val contentsNoTrailingNewline =
+      if String.isSuffix "\n" contents then
+        String.extract (contents, 0, SOME((String.size contents) - 1))
+      else contents
   in
-    String.tokens (fn c => c = #"\n") contents
+    String.fields (fn c => c = #"\n") contentsNoTrailingNewline
   end
 
 fun exitWithError (message : string) =
@@ -33,7 +37,7 @@ fun processArgs [] =
        "       initool v\n")
   | processArgs ["v"] =
     let
-      val version = "0.8.0"
+      val version = "0.9.0"
     in
       SOME (version ^ "\n")
     end
