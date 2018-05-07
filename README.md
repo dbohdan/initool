@@ -32,8 +32,8 @@ properties.
 The order in which the properties appear is preserved. A new property is added
 after the last property in its section.
 
-Initool understands INI file comments (comment lines starting with ";") in the
-input and preserves them in the output.
+Initool understands INI file comments (lines starting with `;` or `#`) in the
+input and preserves them in the output. It also preserves empty lines.
 
 ### Examples
 
