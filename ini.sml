@@ -3,7 +3,7 @@
  * License: MIT
  *)
 
-structure Ini :> INI =
+structure Ini =
   struct
     (* Model an INI file starting with key=value pairs. *)
     type property = { key : string, value : string }

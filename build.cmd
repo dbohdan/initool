@@ -26,7 +26,7 @@ for %%a in (%*) do (
 rem Build initool.
 echo on
 del *.ui *.uo
-%mosmlc% -toplevel stringtrim.sml ini-sig.sml ini.sml initool.sml -o initool.exe
+%mosmlc% -toplevel stringtrim.sml ini.sml initool.sml -o initool.exe
 @echo off
 if errorlevel 1 exit /b 1
 
