@@ -31,7 +31,7 @@ fun processFile filterFn filename =
 fun processArgs [] =
     SOME
       ("Usage: initool g filename [section [key [--value-only]]]\n" ^
-       "       initool e filename [section [key]]\n" ^
+       "       initool e filename section [key]\n" ^
        "       initool d filename section [key]\n" ^
        "       initool s filename section key value\n" ^
        "       initool v\n")
