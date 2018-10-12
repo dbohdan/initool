@@ -5,7 +5,9 @@
 
 fun readLines (filename : string) : string list =
   let
-    val file = TextIO.openIn filename
+    val file = case filename of
+        "-" => TextIO.stdIn
+      | _ => TextIO.openIn filename
     val contents = TextIO.inputAll file
     val _ = TextIO.closeIn file
     val contentsNoTrailingNewline =
@@ -37,7 +39,7 @@ fun processArgs [] =
        "       initool v\n")
   | processArgs ["v"] =
     let
-      val version = "0.9.0"
+      val version = "0.10.0"
     in
       SOME (version ^ "\n")
     end

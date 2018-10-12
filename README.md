@@ -20,9 +20,10 @@ modified contents to the standard output.
 * `initool v` — print the version number
 
 When given a valid command, initool first reads the INI file `filename` in its
-entirety. For the commands `g`, `d`, and `s` it then prints to the standard
-output the file's contents with the desired changes. For `e` it reports whether
-the section or the property exists through its exit status.
+entirety. If the filename is `-`, initool reads the standard input. For the
+commands `g`, `d`, and `s` it then prints to the standard output the file's
+contents with the desired changes. For `e` it reports whether the section or the
+property exists through its exit status.
 
 Top-level properties (properties not in any section) are accessed by using an
 empty string as the section name. The "exists" command (`e`) with just an empty
