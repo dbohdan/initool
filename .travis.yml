@@ -1,6 +1,6 @@
 language: generic
-before_install:
-- sudo apt-get update -qq
-install:
-- sudo apt-get -y install mlton
+addons:
+  apt:
+    packages:
+      - mlton
 script: make test
