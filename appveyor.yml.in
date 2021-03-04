@@ -9,12 +9,3 @@ test_script:
   - cmd: initool.exe v
 artifacts:
   - path: '*.zip'
-deploy:
-  - provider: BinTray
-    username: dbohdan
-    api_key:
-      secure: ozw96x1eb8jSUjZWB3NtAeExwJJh7ELyI/mQed79YG6wRtXKps3D4Efr34b8RQDJ
-    subject: dbohdan
-    repo: initool
-    package: initool-win32-bin
-    publish: true

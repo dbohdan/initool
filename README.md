@@ -128,8 +128,7 @@ will be installed in `/usr/local/bin`. Run `sudo make uninstall` to remove it.
 ### Windows
 
 Prebuilt Windows binaries are available for
-[releases](https://github.com/dbohdan/initool/releases) and
-[individual commits](https://bintray.com/dbohdan/initool/initool-win32-bin#files).
+[releases](https://github.com/dbohdan/initool/releases).
 
 To build initool yourself, install [MoSML](http://mosml.org).
 
