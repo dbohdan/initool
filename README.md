@@ -6,7 +6,7 @@
 Initool lets you manipulate the contents of INI files from the command line. It
 is a rewrite of an earlier program by the same developer called "iniparse".
 Rather than modify INI files in place like iniparse, however, it prints the
-modified contents to the standard output.
+modified contents to standard output.
 
 
 ## Operation
@@ -20,8 +20,8 @@ modified contents to the standard output.
 * `initool v` — print the version number
 
 When given a valid command, initool first reads the INI file `filename` in its
-entirety. If the filename is `-`, initool reads the standard input. For the
-commands `g`, `d`, and `s` it then prints to the standard output the file's
+entirety. If the filename is `-`, initool reads standard input. For the
+commands `g`, `d`, and `s` it then prints to standard output the file's
 contents with the desired changes. For `e` it reports whether the section or the
 property exists through its exit status.
 
