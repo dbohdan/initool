@@ -1,7 +1,7 @@
 version: "0.10.0.{build}"
 install:
   - cmd: mkdir c:\mosml
-  - ps: Invoke-WebRequest "https://bintray.com/dbohdan/mosml/download_file?file_path=mosml-2.10.1-win32-bin.7z" -OutFile c:\mosml\mosml.7z
+  - ps: Invoke-WebRequest "https://dbohdan.com/dist/mosml-2.10.1-win32.7z" -OutFile c:\mosml\mosml.7z
   - cmd: pushd c:\mosml & 7z x mosml.7z & popd
 build_script:
   - cmd: build.cmd /batch /package
