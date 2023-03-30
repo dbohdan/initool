@@ -6,7 +6,10 @@ initool="$dir/initool"
 tests="tests/*.command"
 temp_file="$(mktemp)"
 exit_status="0"
-trap "rm -f \"$temp_file\"" 0 1 2 3 15
+clean_up() {
+    rm -f "$temp_file"
+}
+trap clean_up EXIT INT
 
 for filename in $tests; do
     result_file="$(echo "$filename" | sed -e s/.command/.result/)"
