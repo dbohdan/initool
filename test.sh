@@ -9,7 +9,7 @@ exit_status="0"
 clean_up() {
     rm -f "$temp_file"
 }
-trap clean_up EXIT INT
+trap clean_up EXIT HUP INT QUIT TERM
 
 for filename in $tests; do
     result_file="$(echo "$filename" | sed -e s/.command/.result/)"
