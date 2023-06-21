@@ -1,6 +1,7 @@
 # initool
 
-[![AppVeyor CI build status](https://ci.appveyor.com/api/projects/status/github/dbohdan/initool?branch=master&svg=true)](https://ci.appveyor.com/project/dbohdan/initool)
+[![GitHub Actions CI status.](https://github.com/dbohdan/initool/actions/workflows/ci.yml/badge.svg)](https://github.com/dbohdan/initool/actions/workflows/ci.yml)&nbsp;
+[![AppVeyor CI status.](https://ci.appveyor.com/api/projects/status/github/dbohdan/initool?branch=master&svg=true)](https://ci.appveyor.com/project/dbohdan/initool)
 
 Initool lets you manipulate the contents of INI files from the command line. It
 is a rewrite of an earlier program by the same developer called "iniparse".
