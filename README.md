@@ -3,10 +3,9 @@
 [![GitHub Actions CI status.](https://github.com/dbohdan/initool/actions/workflows/ci.yml/badge.svg)](https://github.com/dbohdan/initool/actions/workflows/ci.yml)&nbsp;
 [![AppVeyor CI status.](https://ci.appveyor.com/api/projects/status/github/dbohdan/initool?branch=master&svg=true)](https://ci.appveyor.com/project/dbohdan/initool)
 
-Initool lets you manipulate the contents of INI files from the command line. It
-is a rewrite of an earlier program by the same developer called "iniparse".
-Rather than modify INI files in place like iniparse, however, it prints the
-modified contents to standard output.
+Initool lets you manipulate the contents of INI files from the command line.
+Rather than modify INI files in place, it prints the modified contents to
+standard output.
 
 
 ## Operation
@@ -21,16 +20,16 @@ modified contents to standard output.
 
 When given a valid command, initool first reads the INI file `filename` in its
 entirety. If the filename is `-`, initool reads standard input. For the
-commands `g`, `d`, and `s` it then prints to standard output the file's
-contents with the desired changes. For `e` it reports whether the section or the
-property exists through its exit status.
+commands `g`, `d`, and `s`, it then prints to standard output the file's
+contents with the desired changes. For `e`, it reports whether the section or
+the property exists through its exit status.
 
 Top-level properties (properties not in any section) are accessed by using an
 empty string as the section name. The "exists" command (`e`) with just an empty
 string as the argument returns whether or not there are any top-level
 properties.
 
-The order in which the properties appear is preserved. A new property is added
+The order in which properties appear is preserved. A new property is added
 after the last property in its section.
 
 Initool understands INI file comments (lines starting with `;` or `#`) in the
@@ -38,8 +37,8 @@ input and preserves them in the output. It also preserves empty lines.
 
 ### Examples
 
-To modify a file on \*nix, in this case to replace the value of the top-level
-property "cache" in the file `settings.ini`, you can do the following:
+To modify a file on a POSIX system, in this case to replace the value of the
+top-level property "cache" in the file `settings.ini`, you can do the following:
 
 ```sh
 initool s settings.ini '' cache 1024 > settings.ini
@@ -66,12 +65,12 @@ foo1
 
 ### Whitespace
 
-Initool defines whitespace as any mix of space and tab characters. The leading
-and the trailing whitespace around the section name, the key, and the value is
+Initool defines whitespace as any mix of space and tab characters. Leading
+and trailing whitespace around the section name, the key, and the value is
 removed from the output.
 
 As a result, the following input files are all equivalent to each other for
-initool:
+initool and produce the same output. The output is identical to the first input.
 
 ```
 [PHP]
@@ -87,6 +86,9 @@ short_open_tag = Off
     [PHP]
         short_open_tag   =     Off
 ```
+
+Because of this, you can reformat initool-compatible INI files with the command
+`initool g foo.ini`.
 
 ### Nonexistent sections and properties
 
@@ -119,7 +121,9 @@ which limits what you can do with UTF-8-encoded files.
 
 ### Linux and FreeBSD
 
-Install [MLton](http://mlton.org/). It is available as the package `mlton` in Fedora, FreeBSD, Homebrew, and MacPorts. On Debian 12 and Ubuntu 22.04, you will have to build from source.
+Install [MLton](http://mlton.org/). It is available as the package `mlton` in
+Fedora, FreeBSD, Homebrew, and MacPorts. On Debian 12 and Ubuntu 22.04, you will
+have to build from source.
 
 Clone the repository and run `make` and `sudo make install` in it. Initool
 will be installed in `/usr/local/bin`. Run `sudo make uninstall` to remove it.
