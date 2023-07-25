@@ -119,8 +119,7 @@ which limits what you can do with UTF-8-encoded files.
 
 ### Linux and FreeBSD
 
-Install [MLton](http://mlton.org/) (package `mlton` in Debian, Ubuntu, Fedora,
-CentOS and FreeBSD).
+Install [MLton](http://mlton.org/). It is available as the package `mlton` in Fedora, FreeBSD, Homebrew, and MacPorts. On Debian 12 and Ubuntu 22.04, you will have to build from source.
 
 Clone the repository and run `make` and `sudo make install` in it. Initool
 will be installed in `/usr/local/bin`. Run `sudo make uninstall` to remove it.
