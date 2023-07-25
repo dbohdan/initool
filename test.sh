@@ -26,7 +26,7 @@ dir=$(dirname "$me")
 cd "$dir"
 
 initool=./initool
-tests=tests/*.command
+tests='tests/*.command'
 temp_file=$(mktemp initool-test.XXXXXXXX)
 clean_up() {
     rm -f "$temp_file"
