@@ -20,11 +20,11 @@ fun readLines (filename: string) : string list =
     String.fields (fn c => c = #"\n") contentsNoTrailingNewline
   end
 
-fun withNewline (s: string) =
+fun withNewlineIfNotEmpty (s: string) =
   if s = "" orelse String.isSuffix "\n" s then s else s ^ "\n"
 
 fun printFlush (stream: TextIO.outstream) (s: string) =
-  let val _ = TextIO.output (stream, withNewline s)
+  let val _ = TextIO.output (stream, withNewlineIfNotEmpty s)
   in TextIO.flushOut stream
   end
 
