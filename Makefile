@@ -8,7 +8,7 @@ test: initool
 clean:
 	-rm initool VERSION
 install: initool
-	cp initool /usr/local/bin/initool
+	install initool /usr/local/bin/
 uninstall:
 	rm /usr/local/bin/initool
 .PHONY: clean test install uninstall
