@@ -41,15 +41,15 @@ To modify a file on a POSIX system, in this case to replace the value of the
 top-level property "cache" in the file `settings.ini`, you can do the following:
 
 ```sh
-initool s settings.ini '' cache 1024 > settings.ini
+initool s settings.ini '' cache 1024 > settings.ini.new \
+&& mv settings.ini.new settings.ini
 ```
 
-On Windows you should instead redirect initool's output to a temporary file and
-then replace the original with it:
+On Windows:
 
 ```batch
-initool s settings.ini "" cache 1024 > temporary.ini
-move /y temporary.ini settings.ini
+initool s settings.ini "" cache 1024 > settings.ini.new
+if %errorlevel% equ 0 move /y settings.ini.new settings.ini
 ```
 
 To retrieve only the value of a property rather than the whole property
