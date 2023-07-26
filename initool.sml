@@ -18,30 +18,60 @@ fun readLines (filename : string) : string list =
     String.fields (fn c => c = #"\n") contentsNoTrailingNewline
   end
 
+fun withNewline (s : string) =
+  if s = "" orelse String.isSuffix "\n" s then
+    s
+  else
+    s ^ "\n"
+
+fun printFlush (stream : TextIO.outstream) (s : string) =
+  let
+    val _ = TextIO.output (stream, withNewline s)
+  in
+    TextIO.flushOut stream
+  end
+
 fun exitWithError (message : string) =
   let
-    val fullMessage = "Error: " ^ message ^ "\n"
-    val _ = TextIO.output (TextIO.stdErr, fullMessage)
-    val _ = TextIO.flushOut TextIO.stdErr
+    val _ = printFlush TextIO.stdErr message
   in
     OS.Process.exit(OS.Process.failure)
   end
 
+datatype result = Output of string | Notification of string | Error of string
+
 fun processFile filterFn filename =
-  SOME ((Ini.stringify o filterFn o Ini.parse o readLines) filename)
+  Output ((Ini.stringify o filterFn o Ini.parse o readLines) filename)
+
+val usage =
+    ("usage: initool g filename [section [key [--value-only]]]\n" ^
+     "       initool e filename section [key]\n" ^
+     "       initool d filename section [key]\n" ^
+     "       initool s filename section key value\n" ^
+     "       initool v\n")
+
 
 fun processArgs [] =
-    SOME
-      ("Usage: initool g filename [section [key [--value-only]]]\n" ^
-       "       initool e filename section [key]\n" ^
-       "       initool d filename section [key]\n" ^
-       "       initool s filename section key value\n" ^
-       "       initool v\n")
+    Notification usage
+  | processArgs ["h"] =
+    processArgs []
+  | processArgs ["help"] =
+    processArgs []
+  | processArgs ["-h"] =
+    processArgs []
+  | processArgs ["-help"] =
+    processArgs []
+  | processArgs ["--help"] =
+    processArgs []
+  | processArgs ["-?"] =
+    processArgs []
+  | processArgs ["/?"] =
+    processArgs []
   | processArgs ["v"] =
     let
-      val version = "0.10.0"
+      val version = "0.10.1"
     in
-      SOME (version ^ "\n")
+      Output (version ^ "\n")
     end
   | processArgs ["g", filename] =
     processFile (fn x => x) filename
@@ -64,9 +94,9 @@ fun processArgs [] =
       case selection of
           [{ name = _,
               contents = [Ini.Property { key = _, value }] }] =>
-          SOME (value ^ "\n")
+          Output (value ^ "\n")
         (* Treat unset properties as blank. *)
-        | _ => SOME ""
+        | _ => Output ""
     end
   | processArgs ["e", filename, section] =
     (* Section exists *)
@@ -74,8 +104,8 @@ fun processArgs [] =
       val q = Ini.SelectSection section
     in
       case (Ini.select q o Ini.parse o readLines) filename of
-          [] => NONE
-        | _ => SOME ""
+          [] => Error ""
+        | _ => Output ""
     end
   | processArgs ["e", filename, section, key] =
     (* Property exists *)
@@ -84,8 +114,8 @@ fun processArgs [] =
     in
       case (Ini.select q o Ini.parse o readLines) filename of
           [{contents = [Ini.Property { key = key, value = _ }], name = _ }] =>
-            SOME ""
-        | _ => NONE
+            Output ""
+        | _ => Error ""
     end
   | processArgs ["d", filename, section] =
     (* Delete section *)
@@ -108,12 +138,15 @@ fun processArgs [] =
       processFile (Ini.merge update) filename
     end
   | processArgs _ =
-    processArgs []
+    Error usage
 
 val args = CommandLine.arguments ()
+
 val result = processArgs args
-  handle Ini.Tokenization(message) => exitWithError message
+  handle Ini.Tokenization(message) => exitWithError ("Error: " ^ message)
 val _ = case result of
-    SOME(s) => print s
-  | NONE => OS.Process.exit (OS.Process.failure)
+    Output s => printFlush TextIO.stdOut s
+  | Notification s => printFlush TextIO.stdErr s
+  | Error s => exitWithError s
+
 val _ = OS.Process.exit (OS.Process.success)
