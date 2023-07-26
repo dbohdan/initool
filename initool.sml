@@ -1,5 +1,5 @@
 (* initool -- manipulate the contents of INI files from the command line
- * Copyright (c) 2015-2018 D. Bohdan
+ * Copyright (c) 2015-2018, 2023 D. Bohdan
  * License: MIT
  *)
 
