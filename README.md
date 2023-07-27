@@ -4,8 +4,8 @@
 [![AppVeyor CI status.](https://ci.appveyor.com/api/projects/status/github/dbohdan/initool?branch=master&svg=true)](https://ci.appveyor.com/project/dbohdan/initool)
 
 Initool lets you manipulate the contents of INI files from the command line.
-Rather than modify INI files in place, it prints the modified contents to
-standard output.
+Rather than modify an INI file in place, it prints the modified contents of the
+file to standard output.
 
 
 ## Operation
@@ -21,9 +21,9 @@ standard output.
 Commands can be abbreviated to their first letter: `g`, `e`, `s`, `d`, `v`.
 When given a valid command, initool first reads the INI file `filename` in its
 entirety. If the filename is `-`, initool reads standard input. For the
-commands `get`, `delete`, and `set`, it then prints to standard output the file's
-contents with the desired changes. For `exists`, it reports whether the section or
-the property exists through its exit status.
+commands `get`, `delete`, and `set`, it then prints to standard output the
+file's contents with the desired change. For `exists`, it reports whether the
+section or the property exists through its exit status.
 
 Top-level properties (properties not in any section) are accessed by using an
 empty string as the section name. The `exists` command with just an empty
@@ -38,38 +38,41 @@ input and preserves them in the output. It also preserves empty lines.
 
 ### Examples
 
-To modify a file on a POSIX system, in this case to replace the value of the
-top-level property `cache` in the file `settings.ini`, you can do the following:
+Let's replace the value of the top-level property `cache` in the
+file `settings.ini` from a
+[POSIX-compatible shell](https://en.wikipedia.org/wiki/Unix_shell). You can
+do this on FreeBSD, Linux, and macOS.
 
 ```sh
 initool set settings.ini '' cache 1024 > settings.ini.new \
 && mv settings.ini.new settings.ini
 ```
 
-On Windows:
+Now let's do the same on Windows using the Command Prompt (`cmd.exe`):
 
 ```batch
 initool set settings.ini "" cache 1024 > settings.ini.new
 if %errorlevel% equ 0 move /y settings.ini.new settings.ini
 ```
 
-You can pipeline invocations of initool to make multiple changes.
+You can pipeline invocations of initool to make multiple changes. In a POSIX
+shell:
 
 ```sh
-# POSIX.
 initool delete settings.ini test \
 | initool set - '' cache 1024 > settings.ini.new \
 && mv settings.ini.new settings.ini
 ```
 
+In the Windows Command Prompt:
+
 ```batch
-rem Windows
 initool delete settings.ini test | initool set - "" cache 1024 > settings.ini.new
 if %errorlevel% equ 0 move /y settings.ini.new settings.ini
 ```
  
 To retrieve only the value of a property rather than the whole property
-(section, key, and value), use the flag `-v` or `--value-only`:
+(the section, key, and value), use the flag `-v` or `--value-only`:
 
 ```sh
 $ initool get tests/test.ini foo name1
@@ -104,7 +107,7 @@ short_open_tag = Off
 ```
 
 Because of this, you can reformat initool-compatible INI files with the command
-`initool get foo.ini`.
+`initool get file.ini`.
 
 ### Nonexistent sections and properties
 
@@ -126,33 +129,39 @@ How nonexistent sections and properties are handled depends on the command.
 ### Line endings
 
 When compiled according to the instructions below, initool will assume line
-endings to be LF on *nix and either LF or CR+LF on Windows. To operate on
-Windows files from *nix, convert the files' line endings to LF and then back.
+endings to be LF on POSIX and either LF or CR+LF on Windows. To operate on
+Windows files from POSIX, convert the files' line endings to LF and then back.
 You can accomplish this, e.g., [using sed](http://stackoverflow.com/a/2613834).
 
 ### Text encodings
 
 Initool is encoding-naive and assumes one character is one byte. It correctly
 processes UTF-8-encoded files when given UTF-8 command line arguments but
-can't open files in UTF-16 or UTF-32. On Windows it will receive the command
+can't open files in UTF-16 or UTF-32. On Windows, it will receive the command
 line arguments in the encoding for your system's language for non-Unicode
 programs (e.g., [Windows-1252](https://en.wikipedia.org/wiki/Windows-1252)),
 which limits what you can do with UTF-8-encoded files.
 
 ## Building and installation
 
-### Linux and FreeBSD
+### FreeBSD and Linux
 
 Install [MLton](http://mlton.org/). It is available as the package `mlton` in
-Fedora, FreeBSD, Homebrew, and MacPorts. On Debian 12 and Ubuntu 22.04, you will
-have to build from source.
+Fedora and FreeBSD. On Debian 12 and Ubuntu 22.04, you will
+have to build MLton from source.
 
 Clone the repository and run `make` and `sudo make install` in it. Initool
 will be installed in `/usr/local/bin`. Run `sudo make uninstall` to remove it.
 
+### macOS
+
+On macOS, you can install initool from MacPorts as `sysutils/initool`. If you
+want to compile it yourself, MLton is available as `mlton` in Homebrew and
+MacPorts. Follow the FreeBSD and Linux instructions above.
+
 ### Windows
 
-Prebuilt Windows binaries are available for
+Prebuilt Windows binaries are attached to
 [releases](https://github.com/dbohdan/initool/releases).
 
 To build initool yourself, install [MoSML](http://mosml.org).
