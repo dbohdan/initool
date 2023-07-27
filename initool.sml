@@ -39,10 +39,12 @@ fun processFile filterFn filename =
   Output ((Ini.stringify o filterFn o Ini.parse o readLines) filename)
 
 val usage =
-  ("usage: initool g filename [section [key [--value-only]]]\n"
-   ^ "       initool e filename section [key]\n"
-   ^ "       initool d filename section [key]\n"
-   ^ "       initool s filename section key value\n" ^ "       initool v\n")
+  ("usage: initool <command> [<arg> ...]\n\n" ^ "commands:\n"
+   ^ "    get <filename> [<section> [<key> [-v|--value-only]]]\n"
+   ^ "    exists <filename> <section> [<key>]\n"
+   ^ "    set <filename> <section> <key> <value>\n"
+   ^ "    delete <filename> <section> [<key>]\n" ^ "    version\n\n"
+   ^ "Each command can be abbreviated to its first letter.")
 
 fun processArgs [] = Notification usage
   | processArgs ["h"] = processArgs []
@@ -52,21 +54,26 @@ fun processArgs [] = Notification usage
   | processArgs ["--help"] = processArgs []
   | processArgs ["-?"] = processArgs []
   | processArgs ["/?"] = processArgs []
-  | processArgs ["v"] =
-      let val version = "0.10.1"
+  | processArgs ["v"] = processArgs ["version"]
+  | processArgs ["version"] =
+      let val version = "0.11.0"
       in Output (version ^ "\n")
       end
-  | processArgs ["g", filename] =
+  | processArgs ("g" :: rest) =
+      processArgs ("get" :: rest)
+  | processArgs ["get", filename] =
       processFile (fn x => x) filename
-  | processArgs ["g", filename, section] =
+  | processArgs ["get", filename, section] =
       (* Get section *)
       processFile (Ini.select (Ini.SelectSection section)) filename
-  | processArgs ["g", filename, section, key] =
+  | processArgs ["get", filename, section, key] =
       (* Get property *)
       let val q = Ini.SelectProperty {section = section, key = key}
       in processFile (Ini.select q) filename
       end
-  | processArgs ["g", filename, section, key, "--value-only"] =
+  | processArgs ["get", filename, section, key, "-v"] =
+      processArgs ["get", filename, section, key, "--value-only"]
+  | processArgs ["get", filename, section, key, "--value-only"] =
       (* Get only the value *)
       let
         val q = Ini.SelectProperty {section = section, key = key}
@@ -78,7 +85,9 @@ fun processArgs [] = Notification usage
         (* Treat unset properties as blank. *)
         | _ => Output ""
       end
-  | processArgs ["e", filename, section] =
+  | processArgs ("e" :: rest) =
+      processArgs ("exists" :: rest)
+  | processArgs ["exists", filename, section] =
       (* Section exists *)
       let
         val q = Ini.SelectSection section
@@ -87,7 +96,7 @@ fun processArgs [] = Notification usage
           [] => Error ""
         | _ => Output ""
       end
-  | processArgs ["e", filename, section, key] =
+  | processArgs ["exists", filename, section, key] =
       (* Property exists *)
       let
         val q = Ini.SelectProperty {section = section, key = key}
@@ -97,15 +106,19 @@ fun processArgs [] = Notification usage
             Output ""
         | _ => Error ""
       end
-  | processArgs ["d", filename, section] =
+  | processArgs ["delete", filename, section] =
       (* Delete section *)
       processFile (Ini.select (Ini.RemoveSection section)) filename
-  | processArgs ["d", filename, section, key] =
+  | processArgs ("d" :: rest) =
+      processArgs ("delete" :: rest)
+  | processArgs ["delete", filename, section, key] =
       (* Delete property *)
       let val q = Ini.RemoveProperty {section = section, key = key}
       in processFile (Ini.select q) filename
       end
-  | processArgs ["s", filename, section, key, value] =
+  | processArgs ("s" :: rest) =
+      processArgs ("set" :: rest)
+  | processArgs ["set", filename, section, key, value] =
       (* Set value *)
       let
         val update =

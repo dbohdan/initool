@@ -12,12 +12,13 @@ standard output.
 
 ### Usage
 
-* `initool g filename [section [key [--value-only]]]` — retrieve data
-* `initool e filename section [key]` — check if a section or a property exists
-* `initool d filename section [key]` — delete a section or a property
-* `initool s filename section key value` — set a property's value
-* `initool v` — print the version number
+* `initool get <filename> [<section> [<key> [-v|--value-only]]]` — retrieve data
+* `initool exists <filename> <section> [<key>]` — check if a section or a property exists
+* `initool set <filename> <section> <key> <value>` — set a property's value
+* `initool delete <filename> <section> [<key>]` — delete a section or a property
+* `initool version` — print the version number
 
+Commands can be abbreviated to their first letter: `g`, `e`, `s`, `d`, `v`.
 When given a valid command, initool first reads the INI file `filename` in its
 entirety. If the filename is `-`, initool reads standard input. For the
 commands `g`, `d`, and `s`, it then prints to standard output the file's
@@ -41,14 +42,14 @@ To modify a file on a POSIX system, in this case to replace the value of the
 top-level property "cache" in the file `settings.ini`, you can do the following:
 
 ```sh
-initool s settings.ini '' cache 1024 > settings.ini.new \
+initool set settings.ini '' cache 1024 > settings.ini.new \
 && mv settings.ini.new settings.ini
 ```
 
 On Windows:
 
 ```batch
-initool s settings.ini "" cache 1024 > settings.ini.new
+initool set settings.ini "" cache 1024 > settings.ini.new
 if %errorlevel% equ 0 move /y settings.ini.new settings.ini
 ```
 
@@ -56,10 +57,10 @@ To retrieve only the value of a property rather than the whole property
 (section, key, and value), use the flag `--value-only`:
 
 ```sh
-$ initool g tests/test.ini foo name1
+$ initool get tests/test.ini foo name1
 [foo]
 name1=foo1
-$ initool g tests/test.ini foo name1 --value-only
+$ initool get tests/test.ini foo name1 --value-only
 foo1
 ```
 

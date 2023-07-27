@@ -40,7 +40,7 @@ trap clean_up EXIT HUP INT QUIT TERM
 
 exit_status=0
 for filename in $tests; do
-    result_file="$(printf '%s' "$filename" | sed -e s/.command/.result/)"
+    result_file="$(printf '%s' "$filename" | sed -e 's/\.command/.result/')"
     INITOOL="$initool" sh "$filename" >"$temp_file"
     if ! diff "$result_file" "$temp_file"; then
         # The result differs from what was expected.

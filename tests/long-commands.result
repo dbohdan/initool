@@ -1,0 +1,30 @@
+[PHP]
+
+;;;;;;;;;;;;;;;;;;;
+; About php.ini   ;
+;;;;;;;;;;;;;;;;;;;
+; PHP's initialization file.
+
+engine=On
+short_open_tag=Off
+
+[test]
+
+---
+yes
+---
+[PHP]
+
+;;;;;;;;;;;;;;;;;;;
+; About php.ini   ;
+;;;;;;;;;;;;;;;;;;;
+; PHP's initialization file.
+
+engine=On
+short_open_tag=Off
+
+[test]
+k=v
+---
+[test]
+
