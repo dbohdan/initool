@@ -21,12 +21,12 @@ standard output.
 Commands can be abbreviated to their first letter: `g`, `e`, `s`, `d`, `v`.
 When given a valid command, initool first reads the INI file `filename` in its
 entirety. If the filename is `-`, initool reads standard input. For the
-commands `g`, `d`, and `s`, it then prints to standard output the file's
-contents with the desired changes. For `e`, it reports whether the section or
+commands `get`, `delete`, and `set`, it then prints to standard output the file's
+contents with the desired changes. For `exists`, it reports whether the section or
 the property exists through its exit status.
 
 Top-level properties (properties not in any section) are accessed by using an
-empty string as the section name. The "exists" command (`e`) with just an empty
+empty string as the section name. The `exists` command with just an empty
 string as the argument returns whether or not there are any top-level
 properties.
 
@@ -39,7 +39,7 @@ input and preserves them in the output. It also preserves empty lines.
 ### Examples
 
 To modify a file on a POSIX system, in this case to replace the value of the
-top-level property "cache" in the file `settings.ini`, you can do the following:
+top-level property `cache` in the file `settings.ini`, you can do the following:
 
 ```sh
 initool set settings.ini '' cache 1024 > settings.ini.new \
@@ -54,7 +54,7 @@ if %errorlevel% equ 0 move /y settings.ini.new settings.ini
 ```
 
 To retrieve only the value of a property rather than the whole property
-(section, key, and value), use the flag `--value-only`:
+(section, key, and value), use the flag `-v` or `--value-only`:
 
 ```sh
 $ initool get tests/test.ini foo name1
@@ -89,18 +89,24 @@ short_open_tag = Off
 ```
 
 Because of this, you can reformat initool-compatible INI files with the command
-`initool g foo.ini`.
+`initool get foo.ini`.
 
 ### Nonexistent sections and properties
 
 How nonexistent sections and properties are handled depends on the command.
 
-| Command | Result | Exit status |
-|---------|--------|--------------|
-| `g` | With the flag `--value-only` initool produces no output. Without it, a blank line is printed if the section doesn't exist. The section name followed by a blank line is printed if the section exists but the property does not. | 0 |
-| `e` | No output. | 0 if the section/property exists and 1 otherwise. |
-| `d` | Nothing is removed from the input in the output. | 0 |
-| `s` | The section and the property are created if needed. | 0 |
+* **`get`**
+    * **Result:** With the flag `--value-only`, initool produces no output. Without the flag, initool prints a blank line if the section doesn't exist. Initool prints the section name followed by a blank line if the section exists, but the property does not.
+    * **Exit status:** 0.
+* **`exists`**
+    * **Result:** No output.
+    * **Exit status:** 0 if the section/property exists, 1 if it doesn't.
+* **`set`**
+    * **Result:** The section and the property are created as needed.
+    * **Exit status:** 0.
+* **`delete`**
+    * **Result:** Nothing is removed from the input in the output.
+    * **Exit status:** 0.
 
 ### Line endings
 
