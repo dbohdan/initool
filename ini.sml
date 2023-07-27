@@ -211,9 +211,21 @@ struct
 
       val updatedIni = List.map mergeOrKeep to
       val newSections = List.filter (missingIn updatedIni) from
-      val prepend = List.filter (fn sec => #name sec = "") newSections
+      val prepend = List.find (fn sec => #name sec = "") newSections
       val append = List.filter (fn sec => #name sec <> "") newSections
+      val prependPadded =
+        case prepend of
+          NONE => []
+        | SOME (prependSec) =>
+            (* Add an empty line after top-level properties if there are
+            * sections following them. *)
+            if updatedIni <> [] orelse append <> [] then
+              [{ name = (#name prependSec)
+               , contents = (#contents prependSec) @ [Empty]
+               }]
+            else
+              [prependSec]
     in
-      prepend @ updatedIni @ append
+      prependPadded @ updatedIni @ append
     end
 end
