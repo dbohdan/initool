@@ -1,5 +1,5 @@
 (* initool -- manipulate the contents of INI files from the command line
- * Copyright (c) 2015-2018 D. Bohdan
+ * Copyright (c) 2015-2018, 2023 D. Bohdan
  * License: MIT
  *)
 
@@ -211,7 +211,9 @@ struct
 
       val updatedIni = List.map mergeOrKeep to
       val newSections = List.filter (missingIn updatedIni) from
+      val prepend = List.filter (fn sec => #name sec = "") newSections
+      val append = List.filter (fn sec => #name sec <> "") newSections
     in
-      updatedIni @ newSections
+      prepend @ updatedIni @ append
     end
 end
