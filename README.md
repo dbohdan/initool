@@ -144,27 +144,30 @@ which limits what you can do with UTF-8-encoded files.
 
 ## Building and installation
 
-### FreeBSD and Linux
+### FreeBSD, MacPorts port
+
+You can install `sysutils/initool` from the FreeBSD ports tree and MacPorts.
+
+### Building on FreeBSD, Linux, macOS
 
 Install [MLton](http://mlton.org/). It is available as the package `mlton` in
-Fedora and FreeBSD. On Debian 12 and Ubuntu 22.04, you will
-have to build MLton from source.
+Fedora, FreeBSD, Homebrew, MacPorts, and
+[other repositories](https://repology.org/project/mlton/versions).
+On Debian 12 and Ubuntu 22.04, you will have to build MLton from source.
 
-Clone the repository and run `make` and `sudo make install` in it. Initool
+Clone the repository and run `make` then `sudo make install` in it. Initool
 will be installed in `/usr/local/bin`. Run `sudo make uninstall` to remove it.
 
-### macOS
+### Building on Windows
 
-On macOS, you can install initool from MacPorts as `sysutils/initool`. If you
-want to compile it yourself, MLton is available as `mlton` in Homebrew and
-MacPorts. Follow the FreeBSD and Linux instructions above.
-
-### Windows
-
-Prebuilt Windows binaries are attached to
+Prebuilt Windows (x86) binaries are attached to
 [releases](https://github.com/dbohdan/initool/releases).
 
-To build initool yourself, install [MoSML](http://mosml.org).
+To build initool yourself, first install [MoSML](http://mosml.org). The Windows
+installer is not available on the offical site due to an antivirus false
+positive. I have [mirrored the
+installer](https://github.com/kfl/mosml/issues/49#issuecomment-368878055)
+in an attachment to a GitHub comment.
 
 Clone the repository and run `build.cmd` from its directory.
 
