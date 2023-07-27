@@ -53,6 +53,21 @@ initool set settings.ini "" cache 1024 > settings.ini.new
 if %errorlevel% equ 0 move /y settings.ini.new settings.ini
 ```
 
+You can pipeline invocations of initool to make multiple changes.
+
+```sh
+# POSIX.
+initool delete settings.ini test \
+| initool set - '' cache 1024 > settings.ini.new \
+&& mv settings.ini.new settings.ini
+```
+
+```batch
+rem Windows
+initool delete settings.ini test | initool set - "" cache 1024 > settings.ini.new
+if %errorlevel% equ 0 move /y settings.ini.new settings.ini
+```
+ 
 To retrieve only the value of a property rather than the whole property
 (section, key, and value), use the flag `-v` or `--value-only`:
 
