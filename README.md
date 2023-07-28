@@ -38,6 +38,8 @@ input and preserves them in the output. It also preserves empty lines.
 
 ### Examples
 
+#### POSIX
+
 Let's replace the value of the top-level property `cache` in the
 file `settings.ini` from a
 [POSIX-compatible shell](https://en.wikipedia.org/wiki/Unix_shell). You can
@@ -48,15 +50,7 @@ initool set settings.ini '' cache 1024 > settings.ini.new \
 && mv settings.ini.new settings.ini
 ```
 
-Now let's do the same thing on Windows using the Command Prompt (`cmd.exe`):
-
-```batch
-initool set settings.ini "" cache 1024 > settings.ini.new
-if %errorlevel% equ 0 move /y settings.ini.new settings.ini
-```
-
-You can pipeline invocations of initool to make multiple changes. Here is how
-to do it in a POSIX-compatible shell. Enable `pipefail` in your shell
+You can pipeline invocations of initool to make multiple changes. Enable `pipefail` in your shell
 ([support information](https://unix.stackexchange.com/a/654932))
 to handle errors correctly.
 
@@ -67,7 +61,17 @@ initool delete settings.ini test \
 && mv settings.ini.new settings.ini
 ```
 
-You can also use pipelines in the Windows Command Prompt. Note that the Command
+#### Windows
+
+Now let's replace the value of the top-level property `cache` in the file
+`settings.ini` on Windows from the Command Prompt (`cmd.exe`):
+
+```batch
+initool set settings.ini "" cache 1024 > settings.ini.new
+if %errorlevel% equ 0 move /y settings.ini.new settings.ini
+```
+
+You can use pipelines in the Windows Command Prompt. Note that the Command
 Prompt has no feature like `pipefail`. The `%errorlevel%` will be that of the
 last command in the pipeline, which in this case cannot fail, so an
 `%errorlevel%` check would be pointless. This is a reason to avoid pipelines in
@@ -77,6 +81,8 @@ batch files.
 initool delete settings.ini test | initool set - "" cache 1024 > settings.ini.new
 move /y settings.ini.new settings.ini
 ```
+
+#### Both
 
 To retrieve only the value of a property rather than the whole property
 (the section, key, and value), use the flag `-v` or `--value-only`:
