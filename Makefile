@@ -11,4 +11,4 @@ install: initool
 	install initool /usr/local/bin/
 uninstall:
 	rm /usr/local/bin/initool
-.PHONY: clean test install uninstall
+.PHONY: all clean test install uninstall
