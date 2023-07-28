@@ -48,29 +48,36 @@ initool set settings.ini '' cache 1024 > settings.ini.new \
 && mv settings.ini.new settings.ini
 ```
 
-Now let's do the same on Windows using the Command Prompt (`cmd.exe`):
+Now let's do the same thing on Windows using the Command Prompt (`cmd.exe`):
 
 ```batch
 initool set settings.ini "" cache 1024 > settings.ini.new
 if %errorlevel% equ 0 move /y settings.ini.new settings.ini
 ```
 
-You can pipeline invocations of initool to make multiple changes. In a POSIX
-shell:
+You can pipeline invocations of initool to make multiple changes. Here is how
+to do it in a POSIX-compatible shell. Enable `pipefail` in your shell
+([support information](https://unix.stackexchange.com/a/654932))
+to handle errors correctly.
 
 ```sh
+set -o pipefail
 initool delete settings.ini test \
 | initool set - '' cache 1024 > settings.ini.new \
 && mv settings.ini.new settings.ini
 ```
 
-In the Windows Command Prompt:
+You can also use pipelines in the Windows Command Prompt. Note that the Command
+Prompt has no feature like `pipefail`. The `%errorlevel%` will be that of the
+last command in the pipeline, which in this case cannot fail, so an
+`%errorlevel%` check would be pointless. This is a reason to avoid pipelines in
+batch files.
 
 ```batch
 initool delete settings.ini test | initool set - "" cache 1024 > settings.ini.new
-if %errorlevel% equ 0 move /y settings.ini.new settings.ini
+move /y settings.ini.new settings.ini
 ```
- 
+
 To retrieve only the value of a property rather than the whole property
 (the section, key, and value), use the flag `-v` or `--value-only`:
 
