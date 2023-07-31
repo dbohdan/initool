@@ -1,3 +1,7 @@
+DESTDIR=
+PREFIX=/usr/local
+BINDIR=$(PREFIX)/bin
+
 all: test VERSION
 initool: initool.mlb stringtrim.sml ini.sml initool.sml
 	mlton initool.mlb
@@ -8,7 +12,8 @@ test: initool
 clean:
 	-rm initool VERSION
 install: initool
-	install initool /usr/local/bin/
+	mkdir -p $(DESTDIR)$(BINDIR)
+	install initool $(DESTDIR)$(BINDIR)
 uninstall:
-	rm /usr/local/bin/initool
+	rm $(DESTDIR)$(BINDIR)/initool
 .PHONY: all clean test install uninstall
