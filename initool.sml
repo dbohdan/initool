@@ -43,6 +43,8 @@ val getUsage = "get <filename> [<section> [<key> [-v|--value-only]]]"
 val existsUsage = "exists <filename> <section> [<key>]"
 val setUsage = "set <filename> <section> <key> <value>"
 val deleteUsage = "delete <filename> <section> [<key>]"
+val helpUsage = "help"
+val versionUsage = "version"
 
 val availableCommands =
   "available commands: \"get\", \"exists\", \"set\", "
@@ -76,16 +78,20 @@ fun formatArgs (args: string list) =
 
 fun helpCommand [] = Notification allUsage
   | helpCommand [_] = helpCommand []
-  | helpCommand (cmd :: _) =
-      Error (invalidUsage ^ "\"" ^ cmd ^ "\"" ^ takesNoArgs)
+  | helpCommand (cmd :: rest) =
+      Error
+        (invalidUsage ^ (formatArgs (cmd :: rest)) ^ "\n\"" ^ cmd ^ "\""
+         ^ takesNoArgs)
 
 fun versionCommand [] =
       let val version = "0.12.0"
       in Output (version ^ "\n")
       end
   | versionCommand [_] = versionCommand []
-  | versionCommand (cmd :: _) =
-      Error (invalidUsage ^ "\"" ^ cmd ^ "\"" ^ takesNoArgs)
+  | versionCommand (cmd :: rest) =
+      Error
+        (invalidUsage ^ (formatArgs (cmd :: rest)) ^ "\n\"" ^ cmd ^ "\""
+         ^ takesNoArgs)
 
 fun getCommand ("g" :: rest) =
       getCommand ("get" :: rest)

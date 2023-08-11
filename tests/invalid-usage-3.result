@@ -1,4 +1,8 @@
-invalid usage: "h" takes no arguments
-invalid usage: "help" takes no arguments
-invalid usage: "v" takes no arguments
-invalid usage: "version" takes no arguments
+invalid usage: h x y z
+"h" takes no arguments
+invalid usage: help get
+"help" takes no arguments
+invalid usage: v ersion
+"v" takes no arguments
+invalid usage: version -1
+"version" takes no arguments
