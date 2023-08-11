@@ -1,8 +1,16 @@
+invalid usage: g
+usage: g <filename> [<section> [<key> [-v|--value-only]]]
 invalid usage: get
 usage: get <filename> [<section> [<key> [-v|--value-only]]]
+invalid usage: e
+usage: e <filename> <section> [<key>]
 invalid usage: exists
 usage: exists <filename> <section> [<key>]
+invalid usage: s
+usage: s <filename> <section> <key> <value>
 invalid usage: set
 usage: set <filename> <section> <key> <value>
+invalid usage: d
+usage: d <filename> <section> [<key>]
 invalid usage: delete
 usage: delete <filename> <section> [<key>]

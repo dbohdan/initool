@@ -39,18 +39,15 @@ fun processFile filterFn filename =
   Output ((Ini.stringify o filterFn o Ini.parse o readLines) filename)
 
 
-val getUsage = "get <filename> [<section> [<key> [-v|--value-only]]]"
-val existsUsage = "exists <filename> <section> [<key>]"
-val setUsage = "set <filename> <section> <key> <value>"
-val deleteUsage = "delete <filename> <section> [<key>]"
-val helpUsage = "help"
-val versionUsage = "version"
+val getUsage = " <filename> [<section> [<key> [-v|--value-only]]]"
+val existsUsage = " <filename> <section> [<key>]"
+val setUsage = " <filename> <section> <key> <value>"
+val deleteUsage = " <filename> <section> [<key>]"
 
 val availableCommands =
   "available commands: \"get\", \"exists\", \"set\", "
   ^ "\"delete\", \"help\", \"version\""
 val invalidUsage = "invalid usage: "
-val takesNoArgs = " takes no arguments"
 val unknownCommand = "unknown command: "
 val usage = "usage: "
 
@@ -58,8 +55,12 @@ val allUsage =
   (usage ^ "initool <command> [<arg> ...]\n\n" ^ "commands:"
    ^
    (String.concatWith "\n    "
-      ["", getUsage, existsUsage, setUsage, deleteUsage])
-   ^ "\n\n    help\n    version\n\n"
+      [ ""
+      , "get" ^ getUsage
+      , "exists" ^ existsUsage
+      , "set" ^ setUsage
+      , "delete" ^ deleteUsage
+      ]) ^ "\n\n    help\n    version\n\n"
    ^ "Each command can be abbreviated to its first letter.")
 
 fun formatArgs (args: string list) =
@@ -79,9 +80,7 @@ fun formatArgs (args: string list) =
 fun helpCommand [] = Notification allUsage
   | helpCommand [_] = helpCommand []
   | helpCommand (cmd :: rest) =
-      Error
-        (invalidUsage ^ (formatArgs (cmd :: rest)) ^ "\n\"" ^ cmd ^ "\""
-         ^ takesNoArgs)
+      Error (invalidUsage ^ (formatArgs (cmd :: rest)) ^ "\n" ^ usage ^ cmd)
 
 fun versionCommand [] =
       let val version = "0.12.0"
@@ -89,25 +88,21 @@ fun versionCommand [] =
       end
   | versionCommand [_] = versionCommand []
   | versionCommand (cmd :: rest) =
-      Error
-        (invalidUsage ^ (formatArgs (cmd :: rest)) ^ "\n\"" ^ cmd ^ "\""
-         ^ takesNoArgs)
+      Error (invalidUsage ^ (formatArgs (cmd :: rest)) ^ "\n" ^ usage ^ cmd)
 
-fun getCommand ("g" :: rest) =
-      getCommand ("get" :: rest)
-  | getCommand ["get", filename] =
+fun getCommand [_, filename] =
       processFile (fn x => x) filename
-  | getCommand ["get", filename, section] =
+  | getCommand [_, filename, section] =
       (* Get section *)
       processFile (Ini.select (Ini.SelectSection section)) filename
-  | getCommand ["get", filename, section, key] =
+  | getCommand [_, filename, section, key] =
       (* Get property *)
       let val q = Ini.SelectProperty {section = section, key = key}
       in processFile (Ini.select q) filename
       end
-  | getCommand ["get", filename, section, key, "-v"] =
-      getCommand ["get", filename, section, key, "--value-only"]
-  | getCommand ["get", filename, section, key, "--value-only"] =
+  | getCommand [cmd, filename, section, key, "-v"] =
+      getCommand [cmd, filename, section, key, "--value-only"]
+  | getCommand [_, filename, section, key, "--value-only"] =
       (* Get only the value *)
       let
         val q = Ini.SelectProperty {section = section, key = key}
@@ -119,12 +114,13 @@ fun getCommand ("g" :: rest) =
         (* Treat unset properties as blank. *)
         | _ => Output ""
       end
-  | getCommand args =
-      Error (invalidUsage ^ (formatArgs args) ^ "\n" ^ usage ^ getUsage)
+  | getCommand (cmd :: rest) =
+      Error
+        (invalidUsage ^ (formatArgs (cmd :: rest)) ^ "\n" ^ usage ^ cmd
+         ^ getUsage)
+  | getCommand [] = getCommand ["get"]
 
-fun existsCommand ("e" :: rest) =
-      existsCommand ("exists" :: rest)
-  | existsCommand ["exists", filename, section] =
+fun existsCommand [_, filename, section] =
       (* Section exists *)
       let
         val q = Ini.SelectSection section
@@ -133,7 +129,7 @@ fun existsCommand ("e" :: rest) =
           [] => Error ""
         | _ => Output ""
       end
-  | existsCommand ["exists", filename, section, key] =
+  | existsCommand [_, filename, section, key] =
       (* Property exists *)
       let
         val q = Ini.SelectProperty {section = section, key = key}
@@ -143,12 +139,13 @@ fun existsCommand ("e" :: rest) =
             Output ""
         | _ => Error ""
       end
-  | existsCommand args =
-      Error (invalidUsage ^ (formatArgs args) ^ "\n" ^ usage ^ existsUsage)
+  | existsCommand (cmd :: rest) =
+      Error
+        (invalidUsage ^ (formatArgs (cmd :: rest)) ^ "\n" ^ usage ^ cmd
+         ^ existsUsage)
+  | existsCommand [] = existsCommand ["exists"]
 
-fun setCommand ("s" :: rest) =
-      setCommand ("set" :: rest)
-  | setCommand ["set", filename, section, key, value] =
+fun setCommand [_, filename, section, key, value] =
       (* Set value *)
       let
         val update =
@@ -158,22 +155,26 @@ fun setCommand ("s" :: rest) =
       in
         processFile (Ini.merge update) filename
       end
-  | setCommand args =
-      Error (invalidUsage ^ (formatArgs args) ^ "\n" ^ usage ^ setUsage)
+  | setCommand (cmd :: rest) =
+      Error
+        (invalidUsage ^ (formatArgs (cmd :: rest)) ^ "\n" ^ usage ^ cmd
+         ^ setUsage)
+  | setCommand [] = setCommand ["set"]
 
 
-fun deleteCommand ["delete", filename, section] =
+fun deleteCommand [_, filename, section] =
       (* Delete section *)
       processFile (Ini.select (Ini.RemoveSection section)) filename
-  | deleteCommand ("d" :: rest) =
-      deleteCommand ("delete" :: rest)
-  | deleteCommand ["delete", filename, section, key] =
+  | deleteCommand [_, filename, section, key] =
       (* Delete property *)
       let val q = Ini.RemoveProperty {section = section, key = key}
       in processFile (Ini.select q) filename
       end
-  | deleteCommand args =
-      Error (invalidUsage ^ (formatArgs args) ^ "\n" ^ usage ^ deleteUsage)
+  | deleteCommand (cmd :: rest) =
+      Error
+        (invalidUsage ^ (formatArgs (cmd :: rest)) ^ "\n" ^ usage ^ cmd
+         ^ deleteUsage)
+  | deleteCommand [] = deleteCommand ["delete"]
 
 
 fun processArgs [] = helpCommand []

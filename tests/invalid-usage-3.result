@@ -1,8 +1,8 @@
 invalid usage: h x y z
-"h" takes no arguments
+usage: h
 invalid usage: help get
-"help" takes no arguments
+usage: help
 invalid usage: v ersion
-"v" takes no arguments
+usage: v
 invalid usage: version -1
-"version" takes no arguments
+usage: version
