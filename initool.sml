@@ -46,6 +46,20 @@ val usage =
    ^ "    delete <filename> <section> [<key>]\n" ^ "    version\n\n"
    ^ "Each command can be abbreviated to its first letter.")
 
+fun formatArgs (args: string list) =
+  let
+    val escapeSpecial = fn s =>
+      String.translate
+        (fn #"\"" => "\\\"" | #"\\" => "\\\\" | c => String.str c) s
+    val shouldQuote = fn s =>
+      List.exists (fn c => Char.isSpace c orelse c = #"\"" orelse c = #"\\")
+        (String.explode s)
+    val quoteArg = fn arg =>
+      if shouldQuote arg then "\"" ^ (escapeSpecial arg) ^ "\"" else arg
+  in
+    String.concatWith " " (List.map quoteArg args)
+  end
+
 fun processArgs [] = Notification usage
   | processArgs ["h"] = processArgs []
   | processArgs ["help"] = processArgs []
@@ -56,7 +70,7 @@ fun processArgs [] = Notification usage
   | processArgs ["/?"] = processArgs []
   | processArgs ["v"] = processArgs ["version"]
   | processArgs ["version"] =
-      let val version = "0.11.0"
+      let val version = "0.12.0"
       in Output (version ^ "\n")
       end
   | processArgs ("g" :: rest) =
@@ -128,7 +142,8 @@ fun processArgs [] = Notification usage
       in
         processFile (Ini.merge update) filename
       end
-  | processArgs _ = Error usage
+  | processArgs args =
+      Error ("invalid command: " ^ (formatArgs args))
 
 val args = CommandLine.arguments ()
 
