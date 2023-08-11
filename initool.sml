@@ -38,7 +38,6 @@ datatype result = Output of string | Notification of string | Error of string
 fun processFile filterFn filename =
   Output ((Ini.stringify o filterFn o Ini.parse o readLines) filename)
 
-
 val getUsage = " <filename> [<section> [<key> [-v|--value-only]]]"
 val existsUsage = " <filename> <section> [<key>]"
 val setUsage = " <filename> <section> <key> <value>"
@@ -160,7 +159,6 @@ fun setCommand [_, filename, section, key, value] =
          ^ setUsage)
   | setCommand [] = setCommand ["set"]
 
-
 fun deleteCommand [_, filename, section] =
       (* Delete section *)
       processFile (Ini.select (Ini.RemoveSection section)) filename
@@ -174,7 +172,6 @@ fun deleteCommand [_, filename, section] =
         (invalidUsage ^ (formatArgs (cmd :: rest)) ^ "\n" ^ usage ^ cmd
          ^ deleteUsage)
   | deleteCommand [] = deleteCommand ["delete"]
-
 
 fun processArgs [] = helpCommand []
   | processArgs ("h" :: args) =
