@@ -1,0 +1,2 @@
+invalid usage: set "in space" "\"bar\"" "\\"
+usage: set <filename> <section> <key> <value>

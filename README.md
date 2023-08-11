@@ -16,6 +16,7 @@ file to standard output.
 * `initool exists <filename> <section> [<key>]` — check if a section or a property exists
 * `initool set <filename> <section> <key> <value>` — set a property's value
 * `initool delete <filename> <section> [<key>]` — delete a section or a property
+* `initool help` — print the help message
 * `initool version` — print the version number
 
 Commands can be abbreviated to their first letter: `g`, `e`, `s`, `d`, `v`.

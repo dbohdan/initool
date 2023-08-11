@@ -1,0 +1,8 @@
+invalid usage: get
+usage: get <filename> [<section> [<key> [-v|--value-only]]]
+invalid usage: exists
+usage: exists <filename> <section> [<key>]
+invalid usage: set
+usage: set <filename> <section> <key> <value>
+invalid usage: delete
+usage: delete <filename> <section> [<key>]
