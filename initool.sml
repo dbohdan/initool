@@ -45,8 +45,7 @@ val setUsage = " <filename> <section> <key> <value>"
 val deleteUsage = " <filename> <section> [<key>]"
 
 val availableCommands =
-  "available commands: \"get\", \"exists\", \"set\", "
-  ^ "\"delete\", \"help\", \"version\""
+  "available commands: get, exists, set, delete, help, version"
 val invalidUsage = "invalid usage: "
 val unknownCommand = "unknown command: "
 val usage = "usage: "

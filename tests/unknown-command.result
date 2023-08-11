@@ -1,2 +1,2 @@
 unknown command: foo
-available commands: "get", "exists", "set", "delete", "help", "version"
+available commands: get, exists, set, delete, help, version
