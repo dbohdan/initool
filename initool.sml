@@ -50,7 +50,7 @@ val unknownCommand = "unknown command: "
 val usage = "usage: "
 
 val allUsage =
-  (usage ^ "initool <command> [<arg> ...]\n\n" ^ "commands:"
+  (usage ^ "initool [-i|--ignore-case] <command> [<arg> ...]\n\n" ^ "commands:"
    ^
    (String.concatWith "\n    "
       [ ""
@@ -81,30 +81,30 @@ fun helpCommand [] = Notification allUsage
       Error (invalidUsage ^ (formatArgs (cmd :: rest)) ^ "\n" ^ usage ^ cmd)
 
 fun versionCommand [] =
-      let val version = "0.12.0"
+      let val version = "0.13.0"
       in Output (version ^ "\n")
       end
   | versionCommand [_] = versionCommand []
   | versionCommand (cmd :: rest) =
       Error (invalidUsage ^ (formatArgs (cmd :: rest)) ^ "\n" ^ usage ^ cmd)
 
-fun getCommand [_, filename] =
+fun getCommand (opts: Ini.options) [_, filename] =
       processFile (fn x => x) filename
-  | getCommand [_, filename, section] =
+  | getCommand opts [_, filename, section] =
       (* Get section *)
-      processFile (Ini.select (Ini.SelectSection section)) filename
-  | getCommand [_, filename, section, key] =
+      processFile (Ini.select opts (Ini.SelectSection section)) filename
+  | getCommand opts [_, filename, section, key] =
       (* Get property *)
       let val q = Ini.SelectProperty {section = section, key = key}
-      in processFile (Ini.select q) filename
+      in processFile (Ini.select opts q) filename
       end
-  | getCommand [cmd, filename, section, key, "-v"] =
-      getCommand [cmd, filename, section, key, "--value-only"]
-  | getCommand [_, filename, section, key, "--value-only"] =
+  | getCommand opts [cmd, filename, section, key, "-v"] =
+      getCommand opts [cmd, filename, section, key, "--value-only"]
+  | getCommand opts [_, filename, section, key, "--value-only"] =
       (* Get only the value *)
       let
         val q = Ini.SelectProperty {section = section, key = key}
-        val selection = ((Ini.select q) o Ini.parse o readLines) filename
+        val selection = ((Ini.select opts q) o Ini.parse o readLines) filename
       in
         case selection of
           [{name = _, contents = [Ini.Property {key = _, value}]}] =>
@@ -112,38 +112,38 @@ fun getCommand [_, filename] =
         (* Treat unset properties as blank. *)
         | _ => Output ""
       end
-  | getCommand (cmd :: rest) =
+  | getCommand opts (cmd :: rest) =
       Error
         (invalidUsage ^ (formatArgs (cmd :: rest)) ^ "\n" ^ usage ^ cmd
          ^ getUsage)
-  | getCommand [] = getCommand ["get"]
+  | getCommand opts [] = getCommand opts ["get"]
 
-fun existsCommand [_, filename, section] =
+fun existsCommand (opts: Ini.options) [_, filename, section] =
       (* Section exists *)
       let
         val q = Ini.SelectSection section
       in
-        case (Ini.select q o Ini.parse o readLines) filename of
+        case (Ini.select opts q o Ini.parse o readLines) filename of
           [] => Error ""
         | _ => Output ""
       end
-  | existsCommand [_, filename, section, key] =
+  | existsCommand opts [_, filename, section, key] =
       (* Property exists *)
       let
         val q = Ini.SelectProperty {section = section, key = key}
       in
-        case (Ini.select q o Ini.parse o readLines) filename of
+        case (Ini.select opts q o Ini.parse o readLines) filename of
           [{contents = [Ini.Property {key = key, value = _}], name = _}] =>
             Output ""
         | _ => Error ""
       end
-  | existsCommand (cmd :: rest) =
+  | existsCommand opts (cmd :: rest) =
       Error
         (invalidUsage ^ (formatArgs (cmd :: rest)) ^ "\n" ^ usage ^ cmd
          ^ existsUsage)
-  | existsCommand [] = existsCommand ["exists"]
+  | existsCommand opts [] = existsCommand opts ["exists"]
 
-fun setCommand [_, filename, section, key, value] =
+fun setCommand (opts: Ini.options) [_, filename, section, key, value] =
       (* Set value *)
       let
         val update =
@@ -151,70 +151,74 @@ fun setCommand [_, filename, section, key, value] =
            , contents = [Ini.Property {key = key, value = value}]
            }]
       in
-        processFile (Ini.merge update) filename
+        processFile (Ini.merge opts update) filename
       end
-  | setCommand (cmd :: rest) =
+  | setCommand opts (cmd :: rest) =
       Error
         (invalidUsage ^ (formatArgs (cmd :: rest)) ^ "\n" ^ usage ^ cmd
          ^ setUsage)
-  | setCommand [] = setCommand ["set"]
+  | setCommand opts [] = setCommand opts ["set"]
 
-fun deleteCommand [_, filename, section] =
+fun deleteCommand (opts: Ini.options) [_, filename, section] =
       (* Delete section *)
-      processFile (Ini.select (Ini.RemoveSection section)) filename
-  | deleteCommand [_, filename, section, key] =
+      processFile (Ini.select opts (Ini.RemoveSection section)) filename
+  | deleteCommand opts [_, filename, section, key] =
       (* Delete property *)
       let val q = Ini.RemoveProperty {section = section, key = key}
-      in processFile (Ini.select q) filename
+      in processFile (Ini.select opts q) filename
       end
-  | deleteCommand (cmd :: rest) =
+  | deleteCommand opts (cmd :: rest) =
       Error
         (invalidUsage ^ (formatArgs (cmd :: rest)) ^ "\n" ^ usage ^ cmd
          ^ deleteUsage)
-  | deleteCommand [] = deleteCommand ["delete"]
+  | deleteCommand opts [] = deleteCommand opts ["delete"]
 
-fun processArgs [] = helpCommand []
-  | processArgs ("h" :: args) =
+fun processArgs (opts: Ini.options) [] = helpCommand []
+  | processArgs opts ("h" :: args) =
       helpCommand ("h" :: args)
-  | processArgs ("-h" :: args) =
+  | processArgs opts ("-h" :: args) =
       helpCommand ("-h" :: args)
-  | processArgs ("-help" :: args) =
+  | processArgs opts ("-help" :: args) =
       helpCommand ("-help" :: args)
-  | processArgs ("--help" :: args) =
+  | processArgs opts ("--help" :: args) =
       helpCommand ("--help" :: args)
-  | processArgs ("-?" :: args) =
+  | processArgs opts ("-?" :: args) =
       helpCommand ("-?" :: args)
-  | processArgs ("/?" :: args) =
+  | processArgs opts ("/?" :: args) =
       helpCommand ("/?" :: args)
-  | processArgs ("help" :: args) =
+  | processArgs opts ("help" :: args) =
       helpCommand ("help" :: args)
-  | processArgs ("v" :: args) =
+  | processArgs opts ("v" :: args) =
       versionCommand ("v" :: args)
-  | processArgs ("version" :: args) =
+  | processArgs opts ("version" :: args) =
       versionCommand ("version" :: args)
-  | processArgs ("g" :: args) =
-      getCommand ("g" :: args)
-  | processArgs ("get" :: args) =
-      getCommand ("get" :: args)
-  | processArgs ("e" :: args) =
-      existsCommand ("e" :: args)
-  | processArgs ("exists" :: args) =
-      existsCommand ("exists" :: args)
-  | processArgs ("s" :: args) =
-      setCommand ("s" :: args)
-  | processArgs ("set" :: args) =
-      setCommand ("set" :: args)
-  | processArgs ("d" :: args) =
-      deleteCommand ("d" :: args)
-  | processArgs ("delete" :: args) =
-      deleteCommand ("delete" :: args)
-  | processArgs (cmd :: _) =
+  | processArgs opts ("-i" :: args) =
+      processArgs {ignoreCase = true} args
+  | processArgs opts ("--ignore-case" :: args) =
+      processArgs {ignoreCase = true} args
+  | processArgs opts ("g" :: args) =
+      getCommand opts ("g" :: args)
+  | processArgs opts ("get" :: args) =
+      getCommand opts ("get" :: args)
+  | processArgs opts ("e" :: args) =
+      existsCommand opts ("e" :: args)
+  | processArgs opts ("exists" :: args) =
+      existsCommand opts ("exists" :: args)
+  | processArgs opts ("s" :: args) =
+      setCommand opts ("s" :: args)
+  | processArgs opts ("set" :: args) =
+      setCommand opts ("set" :: args)
+  | processArgs opts ("d" :: args) =
+      deleteCommand opts ("d" :: args)
+  | processArgs opts ("delete" :: args) =
+      deleteCommand opts ("delete" :: args)
+  | processArgs opts (cmd :: _) =
       Error (unknownCommand ^ (formatArgs [cmd]) ^ "\n" ^ availableCommands)
 
 val args = CommandLine.arguments ()
 
 val result =
-  processArgs args
+  processArgs {ignoreCase = false} args
   handle Ini.Tokenization (message) => exitWithError ("Error: " ^ message)
 val _ =
   case result of

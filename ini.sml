@@ -24,6 +24,8 @@ struct
   | RemoveProperty of {section: string, key: string}
   | UpdateProperty of {section: string, key: string, newValue: string}
 
+  type options = {ignoreCase: bool}
+
   exception Tokenization of string
 
   (* A very rough tokenizer for INI lines. *)
@@ -110,46 +112,59 @@ struct
     in (String.concatWith "\n" sections) ^ "\n"
     end
 
+  fun sameIdentifier (opts: options) (a: string) (b: string) : bool =
+    let
+      val a' = if #ignoreCase opts then String.map Char.toLower a else a
+      val b' = if #ignoreCase opts then String.map Char.toLower b else b
+    in
+      a' = b'
+    end
+
   (* Say whether the item i in section sec should be returned under
    * the operation opr.
    *)
-  fun matchOp (opr: operation) (sec: section) (i: item) : bool =
+  fun matchOp (opts: options) (opr: operation) (sec: section) (i: item) : bool =
     let
       val sectionName = #name sec
+      val matches = sameIdentifier opts
     in
       case (opr, i) of
         (Noop, _) => true
-      | (SelectSection osn, _) => sectionName = osn
+      | (SelectSection osn, _) => matches osn sectionName
       | (SelectProperty {section = osn, key = okey}, Property {key, value = _}) =>
-          (sectionName = osn) andalso (key = okey)
+          matches osn sectionName andalso matches okey key
       | (SelectProperty {section = osn, key = okey}, Comment c) => false
       | (SelectProperty {section = osn, key = okey}, Empty) => false
-      | (RemoveSection osn, _) => sectionName <> osn
+      | (RemoveSection osn, _) => not (matches osn sectionName)
       | (RemoveProperty {section = osn, key = okey}, Property {key, value = _}) =>
-          (sectionName <> osn) orelse (key <> okey)
+          not (matches osn sectionName andalso matches okey key)
       | (RemoveProperty {section = osn, key = okey}, Comment _) => true
       | (RemoveProperty {section = osn, key = okey}, Empty) => true
       | ( UpdateProperty {section = osn, key = okey, newValue = nv}
         , Property {key, value = _}
-        ) => (sectionName = osn) andalso (key = okey)
+        ) => matches osn sectionName andalso matches okey key
       | (UpdateProperty {section = osn, key = okey, newValue = nv}, Comment _) =>
           false
       | (UpdateProperty {section = osn, key = okey, newValue = nv}, Empty) =>
           false
     end
 
-  fun select (opr: operation) (ini: ini_data) : ini_data =
+  fun select (opts: options) (opr: operation) (ini: ini_data) : ini_data =
     let
       fun selectItems (opr: operation) (sec: section) : section =
         { name = (#name sec)
-        , contents = List.filter (matchOp opr sec) (#contents sec)
+        , contents = List.filter (matchOp opts opr sec) (#contents sec)
+
         }
       val sectionsFiltered =
         case opr of
-          SelectSection osn => List.filter (fn sec => (#name sec) = osn) ini
+          SelectSection osn =>
+            List.filter (fn sec => sameIdentifier opts osn (#name sec)) ini
         | SelectProperty {section = osn, key = _} =>
-            List.filter (fn sec => (#name sec) = osn) ini
-        | RemoveSection osn => List.filter (fn sec => (#name sec) <> osn) ini
+            List.filter (fn sec => sameIdentifier opts osn (#name sec)) ini
+        | RemoveSection osn =>
+            List.filter (fn sec => not (sameIdentifier opts osn (#name sec)))
+              ini
         | _ => ini
     in
       List.map (selectItems opr) sectionsFiltered
@@ -158,22 +173,27 @@ struct
   (* Find replacement values in from for the existing properties in to.
    * This function makes n^2 comparisons and is hence slow.
    *)
-  fun mergeSection (from: section) (to: section) : section =
+  fun mergeSection (opts: options) (from: section) (to: section) : section =
     let
-      fun itemsEqual (i1: item) (i2: item) =
+      fun itemsEqual (i1: item) (i2: item) : bool =
         case (i1, i2) of
-          (Property p1, Property p2) => (#key p2) = (#key p1)
+          (Property p1, Property p2) => sameIdentifier opts (#key p1) (#key p2)
         | (_, _) => false
-      fun findReplacements (replacementSource: item list) p1 =
+      fun findReplacements (replacementSource: item list) i1 =
         let
-          val replacement = List.find (itemsEqual p1) replacementSource
+          val replacement: item option =
+            List.find (itemsEqual i1) replacementSource
         in
-          case replacement of
-            SOME (p2) => p2
-          | NONE => p1
+          case (replacement, i1) of
+            (SOME (Property new), Property orig) =>
+              (* Preserve the original key, which may differ in case. *)
+              Property {key = #key orig, value = #value new}
+
+          | (SOME other, _) => other
+          | (NONE, _) => i1
         end
-      fun missingIn (pl: item list) (p1: item) : bool =
-        not (List.exists (itemsEqual p1) pl)
+      fun missingIn (items: item list) (i1: item) : bool =
+        not (List.exists (itemsEqual i1) items)
       fun addBeforeEmpty (from: item list) (to: item list) : item list =
         let
           fun emptyCount l i =
@@ -195,19 +215,22 @@ struct
     end
 
   (* This function makes n^2 comparisons and is hence slow. *)
-  fun merge (from: ini_data) (to: ini_data) : ini_data =
+  fun merge (opts: options) (from: ini_data) (to: ini_data) : ini_data =
     let
       fun mergeOrKeep sec1 =
         let
           val secToMerge =
-            List.find (fn sec2 => (#name sec2) = (#name sec1)) from
+            List.find (fn sec2 => sameIdentifier opts (#name sec1) (#name sec2))
+              from
         in
           case secToMerge of
-            SOME (sec2) => mergeSection sec2 sec1
+            SOME (sec2) => mergeSection opts sec2 sec1
           | NONE => sec1
         end
       fun missingIn (ini: ini_data) (sec1: section) : bool =
-        not (List.exists (fn sec2 => (#name sec2) = (#name sec1)) ini)
+        not
+          (List.exists
+             (fn sec2 => sameIdentifier opts (#name sec1) (#name sec2)) ini)
 
       val updatedIni = List.map mergeOrKeep to
       val newSections = List.filter (missingIn updatedIni) from

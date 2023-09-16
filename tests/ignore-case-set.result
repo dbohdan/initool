@@ -1,0 +1,13 @@
+-- section
+[sql CustomerById]
+Sql=HELLO
+-- key
+[sql CustomerById]
+Sql=HELLO
+-- both
+[sql CustomerById]
+Sql=HELLO
+-- new key
+[sql CustomerById]
+Sql="SELECT * FROM Customers WHERE CustomerID = ?"
+foo=bar

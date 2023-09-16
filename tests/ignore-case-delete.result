@@ -1,0 +1,39 @@
+-- section
+[foo]
+name2=foo2
+name3="repeat value"
+
+[bar]
+name1=bar1
+name2="repeat value"
+
+[baz]
+name1=baz1
+name2=baz2
+name3=baz3
+-- key
+[foo]
+name2=foo2
+name3="repeat value"
+
+[bar]
+name1=bar1
+name2="repeat value"
+
+[baz]
+name1=baz1
+name2=baz2
+name3=baz3
+-- both
+[foo]
+name2=foo2
+name3="repeat value"
+
+[bar]
+name1=bar1
+name2="repeat value"
+
+[baz]
+name1=baz1
+name2=baz2
+name3=baz3

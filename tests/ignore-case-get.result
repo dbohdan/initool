@@ -1,0 +1,9 @@
+-- section
+[foo]
+name1=foo1
+-- key
+[foo]
+name1=foo1
+-- both
+[foo]
+name1=foo1
