@@ -105,12 +105,15 @@ fun getCommand (opts: Ini.options) [_, filename] =
       let
         val q = Ini.SelectProperty {section = section, key = key}
         val selection = ((Ini.select opts q) o Ini.parse o readLines) filename
+        val items = List.concat
+          (List.map (fn {name = _, contents = xs} => xs) selection)
+        val values =
+          List.mapPartial
+            (fn Ini.Property {key = _, value = value} => SOME value | _ => NONE)
+            items
       in
-        case selection of
-          [{name = _, contents = [Ini.Property {key = _, value}]}] =>
-            Output (value ^ "\n")
-        (* Treat unset properties as blank. *)
-        | _ => Output ""
+        Output (String.concatWith "\n" values)
+      (* Treat unset properties as blank. *)
       end
   | getCommand opts (cmd :: rest) =
       Error
@@ -131,11 +134,13 @@ fun existsCommand (opts: Ini.options) [_, filename, section] =
       (* Property exists *)
       let
         val q = Ini.SelectProperty {section = section, key = key}
+        val sections = (Ini.select opts q o Ini.parse o readLines) filename
+        val hasProp =
+          List.exists
+            (fn {contents = (Ini.Property _ :: _), name = _} => true
+              | _ => false) sections
       in
-        case (Ini.select opts q o Ini.parse o readLines) filename of
-          [{contents = [Ini.Property {key = key, value = _}], name = _}] =>
-            Output ""
-        | _ => Error ""
+        if hasProp then Output "" else Error ""
       end
   | existsCommand opts (cmd :: rest) =
       Error

@@ -1,0 +1,23 @@
+-- get
+[bar]
+foo=1
+[bar]
+foo=2
+-- get value
+1
+2
+-- section exists
+1
+-- key exists
+1
+-- set
+[bar]
+foo=3
+
+[bar]
+foo=3
+-- delete
+[bar]
+
+[bar]
+
