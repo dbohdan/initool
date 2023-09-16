@@ -32,6 +32,8 @@ For `exists`, it reports whether the section or the property exists through its 
 Top-level properties (properties not in any section) are accessed by using an empty string as the section name.
 The `exists` command with just an empty string as the argument returns whether or not there are any top-level properties.
 
+The section name and key can be `*` ("wildcard") to match anything.
+
 The order in which properties appear is preserved.
 A new property is added after the last property in its section.
 

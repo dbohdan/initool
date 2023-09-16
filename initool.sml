@@ -59,7 +59,8 @@ val allUsage =
       , "set" ^ setUsage
       , "delete" ^ deleteUsage
       ]) ^ "\n\n    help\n    version\n\n"
-   ^ "Each command can be abbreviated to its first letter.")
+   ^ "Each command can be abbreviated to its first letter. "
+   ^ "<section> and <key> can be '*' to match anything.")
 
 fun formatArgs (args: string list) =
   let
@@ -88,22 +89,34 @@ fun versionCommand [] =
   | versionCommand (cmd :: rest) =
       Error (invalidUsage ^ (formatArgs (cmd :: rest)) ^ "\n" ^ usage ^ cmd)
 
-fun getCommand (opts: Ini.options) [_, filename] =
+fun getCommand (opts: Id.options) [_, filename] =
       processFile (fn x => x) filename
   | getCommand opts [_, filename, section] =
       (* Get section *)
-      processFile (Ini.select opts (Ini.SelectSection section)) filename
+      processFile
+        (Ini.select opts ((Ini.SelectSection o Id.fromStringWildcard) section))
+        filename
   | getCommand opts [_, filename, section, key] =
       (* Get property *)
-      let val q = Ini.SelectProperty {section = section, key = key}
-      in processFile (Ini.select opts q) filename
+      let
+        val q =
+          Ini.SelectProperty
+            { section = Id.fromStringWildcard section
+            , key = Id.fromStringWildcard key
+            }
+      in
+        processFile (Ini.select opts q) filename
       end
   | getCommand opts [cmd, filename, section, key, "-v"] =
       getCommand opts [cmd, filename, section, key, "--value-only"]
   | getCommand opts [_, filename, section, key, "--value-only"] =
       (* Get only the value *)
       let
-        val q = Ini.SelectProperty {section = section, key = key}
+        val q =
+          Ini.SelectProperty
+            { section = Id.fromStringWildcard section
+            , key = Id.fromStringWildcard key
+            }
         val selection = ((Ini.select opts q) o Ini.parse o readLines) filename
         val items = List.concat
           (List.map (fn {name = _, contents = xs} => xs) selection)
@@ -121,10 +134,10 @@ fun getCommand (opts: Ini.options) [_, filename] =
          ^ getUsage)
   | getCommand opts [] = getCommand opts ["get"]
 
-fun existsCommand (opts: Ini.options) [_, filename, section] =
+fun existsCommand (opts: Id.options) [_, filename, section] =
       (* Section exists *)
       let
-        val q = Ini.SelectSection section
+        val q = (Ini.SelectSection o Id.fromStringWildcard) section
       in
         case (Ini.select opts q o Ini.parse o readLines) filename of
           [] => Error ""
@@ -133,7 +146,11 @@ fun existsCommand (opts: Ini.options) [_, filename, section] =
   | existsCommand opts [_, filename, section, key] =
       (* Property exists *)
       let
-        val q = Ini.SelectProperty {section = section, key = key}
+        val q =
+          Ini.SelectProperty
+            { section = Id.fromStringWildcard section
+            , key = Id.fromStringWildcard key
+            }
         val sections = (Ini.select opts q o Ini.parse o readLines) filename
         val hasProp =
           List.exists
@@ -148,12 +165,13 @@ fun existsCommand (opts: Ini.options) [_, filename, section] =
          ^ existsUsage)
   | existsCommand opts [] = existsCommand opts ["exists"]
 
-fun setCommand (opts: Ini.options) [_, filename, section, key, value] =
+fun setCommand (opts: Id.options) [_, filename, section, key, value] =
       (* Set value *)
       let
         val update =
-          [{ name = section
-           , contents = [Ini.Property {key = key, value = value}]
+          [{ name = Id.fromStringWildcard section
+           , contents =
+               [Ini.Property {key = Id.fromStringWildcard key, value = value}]
            }]
       in
         processFile (Ini.merge opts update) filename
@@ -164,13 +182,21 @@ fun setCommand (opts: Ini.options) [_, filename, section, key, value] =
          ^ setUsage)
   | setCommand opts [] = setCommand opts ["set"]
 
-fun deleteCommand (opts: Ini.options) [_, filename, section] =
+fun deleteCommand (opts: Id.options) [_, filename, section] =
       (* Delete section *)
-      processFile (Ini.select opts (Ini.RemoveSection section)) filename
+      processFile
+        (Ini.select opts (Ini.RemoveSection (Id.fromStringWildcard section)))
+        filename
   | deleteCommand opts [_, filename, section, key] =
       (* Delete property *)
-      let val q = Ini.RemoveProperty {section = section, key = key}
-      in processFile (Ini.select opts q) filename
+      let
+        val q =
+          Ini.RemoveProperty
+            { section = Id.fromStringWildcard section
+            , key = Id.fromStringWildcard key
+            }
+      in
+        processFile (Ini.select opts q) filename
       end
   | deleteCommand opts (cmd :: rest) =
       Error
@@ -178,7 +204,7 @@ fun deleteCommand (opts: Ini.options) [_, filename, section] =
          ^ deleteUsage)
   | deleteCommand opts [] = deleteCommand opts ["delete"]
 
-fun processArgs (opts: Ini.options) [] = helpCommand []
+fun processArgs (opts: Id.options) [] = helpCommand []
   | processArgs opts ("h" :: args) =
       helpCommand ("h" :: args)
   | processArgs opts ("-h" :: args) =

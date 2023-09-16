@@ -3,12 +3,46 @@
  * License: MIT
  *)
 
+structure Id =
+struct
+  (* A section and key identifier. *)
+  datatype id =
+    StrId of string
+  | Wildcard
+
+  val empty = StrId ""
+
+  type options = {ignoreCase: bool}
+
+  fun normalize (opts: options) (StrId s) =
+        if #ignoreCase opts then StrId (String.map Char.toLower s) else StrId s
+    | normalize opts Wildcard = Wildcard
+
+  fun same (opts: options) (a: id) (b: id) : bool =
+    let in
+      case (a, b) of
+        (Wildcard, _) => true
+      | (_, Wildcard) => true
+      | _ => (normalize opts a) = (normalize opts b)
+    end
+
+  fun fromString s = StrId s
+
+  fun fromStringWildcard "*" = Wildcard
+    | fromStringWildcard s = StrId s
+
+  fun toString id' =
+    case id' of
+      StrId s => s
+    | Wildcard => "*"
+end
+
 structure Ini =
 struct
   (* Model an INI file starting with key=value pairs. *)
-  type property = {key: string, value: string}
+  type property = {key: Id.id, value: string}
   datatype item = Property of property | Empty | Comment of string
-  type section = {name: string, contents: item list}
+  type section = {name: Id.id, contents: item list}
   type ini_data = section list
 
   datatype line_token =
@@ -18,13 +52,12 @@ struct
   | SectionLine of section
   datatype operation =
     Noop
-  | SelectSection of string
-  | SelectProperty of {section: string, key: string}
-  | RemoveSection of string
-  | RemoveProperty of {section: string, key: string}
-  | UpdateProperty of {section: string, key: string, newValue: string}
+  | SelectSection of Id.id
+  | SelectProperty of {section: Id.id, key: Id.id}
+  | RemoveSection of Id.id
+  | RemoveProperty of {section: Id.id, key: Id.id}
+  | UpdateProperty of {section: Id.id, key: Id.id, newValue: string}
 
-  type options = {ignoreCase: bool}
 
   exception Tokenization of string
 
@@ -54,15 +87,17 @@ struct
       | (_, false, true, _) =>
           let
             val size = String.size line
-            val sectionName = String.substring (line, 1, (size - 2))
+            val sectionName = String.substring (line, 1, size - 2)
           in
-            SectionLine {name = sectionName, contents = []}
+            SectionLine {name = Id.fromString sectionName, contents = []}
           end
       | ("", false, false, _) => EmptyLine
       | (_, false, false, key :: value) =>
           (case value of
              [] => raise Tokenization ("invalid line: \"" ^ line ^ "\"")
-           | _ => PropertyLine {key = key, value = String.concatWith "=" value})
+           | _ =>
+               PropertyLine
+                 {key = Id.fromString key, value = String.concatWith "=" value})
       | (_, false, false, _) => raise Tokenization ("invalid line: " ^ line)
     end
 
@@ -73,7 +108,7 @@ struct
         case sl of
           (y: section) :: ys =>
             {name = #name y, contents = newItem :: (#contents y)} :: ys
-        | [] => [{name = "", contents = [newItem]}]
+        | [] => [{name = Id.fromString "", contents = [newItem]}]
     in
       case lines of
         [] =>
@@ -95,11 +130,11 @@ struct
     let
       fun stringifyItem (i: item) =
         case i of
-          Property prop => (#key prop) ^ "=" ^ (#value prop)
+          Property prop => Id.toString (#key prop) ^ "=" ^ (#value prop)
         | Comment c => c
         | Empty => ""
       val header =
-        case #name sec of
+        case Id.toString (#name sec) of
           "" => ""
         | sectionName => "[" ^ sectionName ^ "]\n"
       val body = List.map stringifyItem (#contents sec)
@@ -112,21 +147,15 @@ struct
     in (String.concatWith "\n" sections) ^ "\n"
     end
 
-  fun sameIdentifier (opts: options) (a: string) (b: string) : bool =
-    let
-      val a' = if #ignoreCase opts then String.map Char.toLower a else a
-      val b' = if #ignoreCase opts then String.map Char.toLower b else b
-    in
-      a' = b'
-    end
 
   (* Say whether the item i in section sec should be returned under
    * the operation opr.
    *)
-  fun matchOp (opts: options) (opr: operation) (sec: section) (i: item) : bool =
+  fun matchOp (opts: Id.options) (opr: operation) (sec: section) (i: item) :
+    bool =
     let
       val sectionName = #name sec
-      val matches = sameIdentifier opts
+      val matches = Id.same opts
     in
       case (opr, i) of
         (Noop, _) => true
@@ -149,7 +178,7 @@ struct
           false
     end
 
-  fun select (opts: options) (opr: operation) (ini: ini_data) : ini_data =
+  fun select (opts: Id.options) (opr: operation) (ini: ini_data) : ini_data =
     let
       fun selectItems (opr: operation) (sec: section) : section =
         { name = (#name sec)
@@ -159,12 +188,11 @@ struct
       val sectionsFiltered =
         case opr of
           SelectSection osn =>
-            List.filter (fn sec => sameIdentifier opts osn (#name sec)) ini
+            List.filter (fn sec => Id.same opts osn (#name sec)) ini
         | SelectProperty {section = osn, key = _} =>
-            List.filter (fn sec => sameIdentifier opts osn (#name sec)) ini
+            List.filter (fn sec => Id.same opts osn (#name sec)) ini
         | RemoveSection osn =>
-            List.filter (fn sec => not (sameIdentifier opts osn (#name sec)))
-              ini
+            List.filter (fn sec => not (Id.same opts osn (#name sec))) ini
         | _ => ini
     in
       List.map (selectItems opr) sectionsFiltered
@@ -173,11 +201,11 @@ struct
   (* Find replacement values in from for the existing properties in to.
    * This function makes n^2 comparisons and is hence slow.
    *)
-  fun mergeSection (opts: options) (from: section) (to: section) : section =
+  fun mergeSection (opts: Id.options) (from: section) (to: section) : section =
     let
       fun itemsEqual (i1: item) (i2: item) : bool =
         case (i1, i2) of
-          (Property p1, Property p2) => sameIdentifier opts (#key p1) (#key p2)
+          (Property p1, Property p2) => Id.same opts (#key p2) (#key p1)
         | (_, _) => false
       fun findReplacements (replacementSource: item list) i1 =
         let
@@ -215,13 +243,12 @@ struct
     end
 
   (* This function makes n^2 comparisons and is hence slow. *)
-  fun merge (opts: options) (from: ini_data) (to: ini_data) : ini_data =
+  fun merge (opts: Id.options) (from: ini_data) (to: ini_data) : ini_data =
     let
       fun mergeOrKeep sec1 =
         let
           val secToMerge =
-            List.find (fn sec2 => sameIdentifier opts (#name sec1) (#name sec2))
-              from
+            List.find (fn sec2 => Id.same opts (#name sec2) (#name sec1)) from
         in
           case secToMerge of
             SOME (sec2) => mergeSection opts sec2 sec1
@@ -229,13 +256,12 @@ struct
         end
       fun missingIn (ini: ini_data) (sec1: section) : bool =
         not
-          (List.exists
-             (fn sec2 => sameIdentifier opts (#name sec1) (#name sec2)) ini)
+          (List.exists (fn sec2 => Id.same opts (#name sec2) (#name sec1)) ini)
 
       val updatedIni = List.map mergeOrKeep to
       val newSections = List.filter (missingIn updatedIni) from
-      val prepend = List.find (fn sec => #name sec = "") newSections
-      val append = List.filter (fn sec => #name sec <> "") newSections
+      val prepend = List.find (fn sec => #name sec = Id.empty) newSections
+      val append = List.filter (fn sec => #name sec <> Id.empty) newSections
       val prependPadded =
         case prepend of
           NONE => []
