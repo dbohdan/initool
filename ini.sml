@@ -144,7 +144,9 @@ struct
 
   fun stringify (ini: ini_data) : string =
     let val sections = map stringifySection ini
-    in (String.concatWith "\n" sections) ^ "\n"
+    val concat = String.concatWith "\n" sections
+    in
+      if concat = "" then "" else concat ^ "\n"
     end
 
 
@@ -293,4 +295,7 @@ struct
         (fn {contents = (Property _ :: _), name = _} => true | _ => false)
         sections
     end
+
+  fun removeEmptySections (sections: ini_data) =
+    List.filter (fn {contents = [], name = _} => false | _ => true) sections
 end

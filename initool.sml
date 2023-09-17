@@ -121,8 +121,10 @@ fun getCommand (opts: Id.options) [_, filename] =
         val successFn = fn (_, filtered) =>
           Ini.propertyExists opts section key filtered
         val q = Ini.SelectProperty {section = section, key = key}
+        val filterFn = fn sections =>
+          (Ini.removeEmptySections o (Ini.select opts q)) sections
       in
-        processFile successFn (Ini.select opts q) filename
+        processFile successFn filterFn filename
       end
   | getCommand opts [cmd, filename, section, key, "-v"] =
       getCommand opts [cmd, filename, section, key, "--value-only"]
