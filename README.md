@@ -6,6 +6,28 @@
 Initool lets you manipulate the contents of INI files from the command line.
 Rather than modify an INI file in place, it prints the modified contents of the file to standard output.
 
+
+## Contents
+
+* [Operation](#operation)
+  * [Usage](#usage)
+  * [Examples](#examples)
+    * [POSIX](#posix)
+    * [Windows](#windows)
+    * [Both](#both)
+  * [Whitespace](#whitespace)
+  * [Nonexistent sections and properties](#nonexistent-sections-and-properties)
+  * [Line endings](#line-endings)
+  * [Case sensitivity](#case-sensitivity)
+  * [Repeated items](#repeated-items)
+  * [Text encodings](#text-encodings)
+* [Building and installation](#building-and-installation)
+  * [FreeBSD, MacPorts port](#freebsd-macports-port)
+  * [Building on FreeBSD, Linux, macOS](#building-on-freebsd-linux-macos)
+  * [Building on Windows](#building-on-windows)
+* [License](#license)
+
+
 ## Operation
 
 ### Usage
@@ -174,6 +196,7 @@ It correctly processes UTF-8-encoded files when given UTF-8 command-line argumen
 On Windows, it will receive the command-line arguments in the encoding for your system's language for non-Unicode programs (e.g., [Windows-1252](https://en.wikipedia.org/wiki/Windows-1252)),
 which limits what you can do with UTF-8-encoded files.
 
+
 ## Building and installation
 
 ### FreeBSD, MacPorts port
@@ -203,6 +226,7 @@ I have [mirrored the installer](https://github.com/kfl/mosml/issues/49#issuecomm
 Clone the repository and run `build.cmd` from its directory.
 
 The test suite currently does not work on Windows.
+
 
 ## License
 
