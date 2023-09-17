@@ -5,7 +5,7 @@
 
 structure Id =
 struct
-  (* A section and key identifier. *)
+  (* A section or key identifier. *)
   datatype id =
     StrId of string
   | Wildcard
@@ -276,5 +276,21 @@ struct
               [prependSec]
     in
       prependPadded @ updatedIni @ append
+    end
+
+  fun sectionExists (opts: Id.options) (section: Id.id) (ini: ini_data) =
+    let val q = SelectSection section
+    in select opts q ini <> []
+    end
+
+  fun propertyExists (opts: Id.options) (section: Id.id) (key: Id.id)
+    (ini: ini_data) =
+    let
+      val q = SelectProperty {section = section, key = key}
+      val sections = select opts q ini
+    in
+      List.exists
+        (fn {contents = (Property _ :: _), name = _} => true | _ => false)
+        sections
     end
 end

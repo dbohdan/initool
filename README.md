@@ -129,16 +129,16 @@ How nonexistent sections and properties are handled depends on the command.
     * **Result:** With the flag `--value-only`, initool produces no output.
     Without the flag, initool prints a blank line if the section doesn't exist.
     Initool prints the section name followed by a blank line if the section exists, but the property does not.
-    * **Exit status:** 0.
+    * **Exit status:** 0 if the file, section, or property exists, 1 if it doesn't.
 * `exists`
     * **Result:** No output.
-    * **Exit status:** 0 if the section/property exists, 1 if it doesn't.
+    * **Exit status:** 0 if the section or property exists, 1 if it doesn't.
 * `set`
     * **Result:** The section and the property are created as needed.
     * **Exit status:** 0.
 * `delete`
     * **Result:** Nothing is removed from the input in the output.
-    * **Exit status:** 0.
+    * **Exit status:** 0 if the section or property was deleted, 1 it wasn't.
 
 ### Line endings
 

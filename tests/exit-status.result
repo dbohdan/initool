@@ -1,0 +1,22 @@
+-- get section, missing section
+failure
+-- get key, missing section
+failure
+-- get key, missing key
+failure
+-- check if section exists, missing section
+failure
+-- check if key exists, missing section
+failure
+-- check if key exists, missing key
+failure
+-- set key, missing section
+success
+-- set key, missing key
+success
+-- delete section, missing section
+failure
+-- delete key, missing section
+failure
+-- delete key, missing key
+failure
