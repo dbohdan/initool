@@ -34,7 +34,7 @@ An INI file consists of properties (`key=value` lines) and sections (designated 
 A property can be at the "top level" of the file (before any section headers) or in a section (after a section header).
 To do something with a property, you must give initool the correct section name.
 Section names and keys are case-sensitive by default.
-The global option `-i` or `--ignore-case` makes commands not distinguish between lower-case and upper-case ASCII letters "A" through "Z" in section names and keys.
+The global option `-i` or `--ignore-case` makes commands not distinguish between lower-case and upper-case [ASCII](https://en.wikipedia.org/wiki/ASCII) letters "A" through "Z" in section names and keys.
 
 Top-level properties (properties not in any section) are accessed by using an empty string as the section name.
 The `exists` command with just an empty string as the argument tells you whether or not there are any top-level properties.
@@ -156,9 +156,11 @@ You can do this [with sed(1)](http://stackoverflow.com/a/2613834).
 ### Case sensitivity
 
 Initool is [case-sensitive](https://en.wikipedia.org/wiki/Case_sensitivity) by default.
-This means that it treats `[BOOT]` and `[boot]` as different sections and the properties `foo=5` and `FOO=5` as having different keys.
-The option `-i`/`--ignore-case` changes this behavior and make initool treat ASCII letters "A" through "Z" as equal to "a" through "z".
-Case is preserved in the output of the commands `get`, `set`, and `delete` regardless of the `-i`/`--ignore-case` option.
+This means that it considers `[BOOT]` and `[boot]` different sections and `foo=5` and `FOO=5` properties with different keys.
+The option `-i`/`--ignore-case` changes this behavior.
+It makes initool treat ASCII letters "A" through "Z" and "a" through "z" as equal
+when looking for sections and keys.
+The case of section names and keys is preserved in the output regardless of the `-i`/`--ignore-case` option.
 
 ### Repeated items
 
