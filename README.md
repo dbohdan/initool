@@ -16,28 +16,37 @@ initool [-i|--ignore-case] <command> [<arg> ...]
 
 The following commands are available:
 
-* `get <filename> [<section> [<key> [-v|--value-only]]]` — retrieve data
-* `exists <filename> <section> [<key>]` — check if a section or a property exists
-* `set <filename> <section> <key> <value>` — set a property's value
-* `delete <filename> <section> [<key>]` — delete a section or a property
-* `help` — print the help message
-* `version` — print the version number
+* `get <filename> [<section> [<key> [-v|--value-only]]]` — retrieve data.
+* `exists <filename> <section> [<key>]` — check if a section or a property exists.
+* `set <filename> <section> <key> <value>` — set a property's value.
+* `delete <filename> <section> [<key>]` — delete a section or a property.
+* `help` — print the help message.
+* `version` — print the version number.
 
-Commands can be abbreviated to their first letter: `g`, `e`, `s`, `d`, `v`.
-The option `-i`/`--ignore-case` makes commands not distingush between lower and upper-case letters "A" through "Z" in section and key names.
+Commands can be abbreviated to their first letter: `g`, `e`, `s`, `d`, `h`, `v`.
+The global option `-i` or `--ignore-case` must precede the command name.
+
 When given a valid command, initool first reads the INI file `filename` in its entirety.
 If the filename is `-`, initool reads standard input. For the commands `get`, `delete`, and `set`, it then prints to standard output the file's contents with the desired change.
 For `exists`, it reports whether the section or the property exists through its exit status.
 
+An INI file consists of properties (`key=value` lines) and sections (designated with a `[section name]` header line).
+A property can be at the "top level" of the file (before any section headers) or in a section (after a section header).
+To do something with a property, you must give initool the correct section name.
+Section names and keys are case-sensitive by default.
+The global option `-i` or `--ignore-case` makes commands not distinguish between lower-case and upper-case ASCII letters "A" through "Z" in section names and keys.
+
 Top-level properties (properties not in any section) are accessed by using an empty string as the section name.
-The `exists` command with just an empty string as the argument returns whether or not there are any top-level properties.
+The `exists` command with just an empty string as the argument tells you whether or not there are any top-level properties.
 
-The section name and key can be `*` ("wildcard") to match anything.
+The section name and key can be `*` (a "wildcard") to match anything.
+For example, `set file.ini "*" foo bar` will set the key `foo` to the value `bar` in every existing section.
+It will set the key `foo` at the top level if the file already has top-level properties.
 
-The order in which properties appear is preserved.
+The order in which properties appear in the INI file is preserved.
 A new property is added after the last property in its section.
 
-Initool understands INI file comments (lines starting with `;` or `#`) in the input and preserves them in the output.
+Initool preserves INI file comments (lines where the first non-whitespace character is either `;` or `#`) in the output when it prints a whole file or a section.
 It also preserves empty lines.
 
 ### Examples
@@ -55,7 +64,7 @@ initool set settings.ini '' cache 1024 > settings.ini.new \
 
 You can pipeline invocations of initool to make multiple changes.
 Enable `pipefail` in your shell
-([support information](https://unix.stackexchange.com/a/654932))
+([compatibility information](https://unix.stackexchange.com/a/654932))
 to handle errors correctly.
 
 ```sh
@@ -76,7 +85,7 @@ if %errorlevel% equ 0 move /y settings.ini.new settings.ini
 
 You can use pipelines in the Windows Command Prompt.
 Note that the Command Prompt has no feature like `pipefail`.
-The `%errorlevel%` will be that of the last command in the pipeline, which in this case cannot fail, so an `%errorlevel%` check would be pointless.
+The `%errorlevel%` will be that of the last command in the pipeline, which in the example below cannot fail, so an `%errorlevel%` check would be pointless.
 This is a reason to avoid pipelines in batch files.
 
 ```batch
@@ -126,9 +135,7 @@ Because of this, you can reformat initool-compatible INI files with the command 
 How nonexistent sections and properties are handled depends on the command.
 
 * `get`
-    * **Result:** With the flag `--value-only`, initool produces no output.
-    Without the flag, initool prints a blank line if the section doesn't exist.
-    Initool prints the section name followed by a blank line if the section exists, but the property does not.
+    * **Result:** initool produces no output when the section or key does not exist.
     * **Exit status:** 0 if the file, section, or property exists, 1 if it doesn't.
 * `exists`
     * **Result:** No output.
@@ -138,28 +145,31 @@ How nonexistent sections and properties are handled depends on the command.
     * **Exit status:** 0.
 * `delete`
     * **Result:** Nothing is removed from the input in the output.
-    * **Exit status:** 0 if the section or property was deleted, 1 it wasn't.
+    * **Exit status:** 0 if the section or property was deleted, 1 if it wasn't.
 
 ### Line endings
 
 When compiled according to the instructions below, initool will assume line endings to be LF on POSIX and either LF or CR+LF on Windows.
 To operate on Windows files from POSIX, convert the files' line endings to LF and then back.
-You can accomplish this, e.g., [using sed](http://stackoverflow.com/a/2613834).
+You can do this [with sed(1)](http://stackoverflow.com/a/2613834).
 
 ### Case sensitivity
 
 Initool is [case-sensitive](https://en.wikipedia.org/wiki/Case_sensitivity) by default.
-This means that it treats `[BOOT]` and `[boot]` as different sections and `foo=5` and `FOO=5` as having different keys.
+This means that it treats `[BOOT]` and `[boot]` as different sections and the properties `foo=5` and `FOO=5` as having different keys.
+The option `-i`/`--ignore-case` changes this behavior and make initool treat ASCII letters "A" through "Z" as equal to "a" through "z".
+Case is preserved in the output of the commands `get`, `set`, and `delete` regardless of the `-i`/`--ignore-case` option.
 
 ### Repeated items
 
-If a file has multiple identically-named section or keys, initool commands act on every one of them at the same time.
+If a file has multiple sections with identical names or identical keys in the same section, initool preserves them.
+Commands act on all of them at the same time.
 
 ### Text encodings
 
 Initool is encoding-naive and assumes one character is one byte.
-It correctly processes UTF-8-encoded files when given UTF-8 command line arguments but can't open files in UTF-16 or UTF-32.
-On Windows, it will receive the command line arguments in the encoding for your system's language for non-Unicode programs (e.g., [Windows-1252](https://en.wikipedia.org/wiki/Windows-1252)),
+It correctly processes UTF-8-encoded files when given UTF-8 command-line arguments but can't open files in UTF-16 or UTF-32.
+On Windows, it will receive the command-line arguments in the encoding for your system's language for non-Unicode programs (e.g., [Windows-1252](https://en.wikipedia.org/wiki/Windows-1252)),
 which limits what you can do with UTF-8-encoded files.
 
 ## Building and installation
@@ -185,7 +195,7 @@ Prebuilt Windows (x86) binaries are attached to
 [releases](https://github.com/dbohdan/initool/releases).
 
 To build initool yourself, first install [MoSML](http://mosml.org).
-The Windows installer is not available on the offical site due to an antivirus false positive.
+The Windows installer is not available on the official site due to an antivirus false positive.
 I have [mirrored the installer](https://github.com/kfl/mosml/issues/49#issuecomment-368878055) in an attachment to a GitHub comment.
 
 Clone the repository and run `build.cmd` from its directory.
