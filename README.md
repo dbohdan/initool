@@ -55,7 +55,7 @@ For `exists`, it reports whether the section or the property exists through its 
 An INI file consists of properties (`key=value` lines) and sections (designated with a `[section name]` header line).
 A property can be at the "top level" of the file (before any section headers) or in a section (after a section header).
 To do something with a property, you must give initool the correct section name.
-Section names and keys are case-sensitive by default.
+Section names and keys are [case-sensitive](#case-sensitivity) by default.
 The global option `-i` or `--ignore-case` makes commands not distinguish between lower-case and upper-case [ASCII](https://en.wikipedia.org/wiki/ASCII) letters "A" through "Z" in section names and keys.
 
 Top-level properties (properties not in any section) are accessed by using an empty string as the section name.
@@ -68,7 +68,7 @@ It will set the key `foo` at the top level if the file already has top-level pro
 The order in which properties appear in the INI file is preserved.
 A new property is added after the last property in its section.
 
-Initool preserves INI file comments (lines where the first non-whitespace character is either `;` or `#`) in the output when it prints a whole file or a section.
+Initool preserves INI file comments (lines where the first character that is not [whitespace](#whitespace) is either `;` or `#`) in the output when it prints a whole file or a section.
 It also preserves empty lines.
 
 ### Examples
