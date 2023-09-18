@@ -1,0 +1,66 @@
+-- get in any section
+[foo]
+name1=foo1
+[bar]
+name1=bar1
+[baz]
+name1=baz1
+-- get, any key
+[foo]
+name1=foo1
+name2=foo2
+name3="repeat value"
+-- exists in any section
+1
+-- exists, any key
+1
+-- set in any section
+[foo]
+name1=HELLO
+name2=foo2
+name3="repeat value"
+
+[bar]
+name1=HELLO
+name2="repeat value"
+
+[baz]
+name1=HELLO
+name2=baz2
+name3=baz3
+-- set, any key
+[foo]
+name1=HELLO
+name2=HELLO
+name3=HELLO
+
+[bar]
+name1=bar1
+name2="repeat value"
+
+[baz]
+name1=baz1
+name2=baz2
+name3=baz3
+-- delete in any section
+[foo]
+name2=foo2
+name3="repeat value"
+
+[bar]
+name2="repeat value"
+
+[baz]
+name2=baz2
+name3=baz3
+-- delete, any key
+[foo]
+
+[bar]
+name1=bar1
+name2="repeat value"
+
+[baz]
+name1=baz1
+name2=baz2
+name3=baz3
