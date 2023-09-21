@@ -6,27 +6,28 @@
 Initool lets you manipulate the contents of INI files from the command line.
 Rather than modify an INI file in place, it prints the modified contents of the file to standard output.
 
-
 ## Contents
 
-* [Operation](#operation)
-  * [Usage](#usage)
-  * [Examples](#examples)
-    * [POSIX](#posix)
-    * [Windows](#windows)
-    * [Both](#both)
-  * [Whitespace](#whitespace)
-  * [Nonexistent sections and properties](#nonexistent-sections-and-properties)
-  * [Line endings](#line-endings)
-  * [Case sensitivity](#case-sensitivity)
-  * [Repeated items](#repeated-items)
-  * [Text encodings](#text-encodings)
-* [Building and installation](#building-and-installation)
-  * [FreeBSD, MacPorts port](#freebsd-macports-port)
-  * [Building on FreeBSD, Linux, macOS](#building-on-freebsd-linux-macos)
-  * [Building on Windows](#building-on-windows)
-* [License](#license)
-
+- [initool](#initool)
+  - [Contents](#contents)
+  - [Operation](#operation)
+    - [Usage](#usage)
+    - [Examples](#examples)
+      - [POSIX](#posix)
+      - [Windows](#windows)
+      - [Both](#both)
+    - [Whitespace](#whitespace)
+    - [Nonexistent sections and properties](#nonexistent-sections-and-properties)
+    - [Line endings](#line-endings)
+    - [Case sensitivity](#case-sensitivity)
+    - [Repeated items](#repeated-items)
+    - [Text encodings](#text-encodings)
+  - [Building and installation](#building-and-installation)
+    - [Docker](#docker)
+    - [FreeBSD, MacPorts port](#freebsd-macports-port)
+    - [Building on FreeBSD, Linux, macOS](#building-on-freebsd-linux-macos)
+    - [Building on Windows](#building-on-windows)
+  - [License](#license)
 
 ## Operation
 
@@ -38,12 +39,12 @@ initool [-i|--ignore-case] <command> [<arg> ...]
 
 The following commands are available:
 
-* `get <filename> [<section> [<key> [-v|--value-only]]]` — retrieve data.
-* `exists <filename> <section> [<key>]` — check if a section or a property exists.
-* `set <filename> <section> <key> <value>` — set a property's value.
-* `delete <filename> <section> [<key>]` — delete a section or a property.
-* `help` — print the help message.
-* `version` — print the version number.
+- `get <filename> [<section> [<key> [-v|--value-only]]]` — retrieve data.
+- `exists <filename> <section> [<key>]` — check if a section or a property exists.
+- `set <filename> <section> <key> <value>` — set a property's value.
+- `delete <filename> <section> [<key>]` — delete a section or a property.
+- `help` — print the help message.
+- `version` — print the version number.
 
 Commands can be abbreviated to their first letter: `g`, `e`, `s`, `d`, `h`, `v`.
 The global option `-i` or `--ignore-case` must precede the command name.
@@ -135,17 +136,17 @@ Leading and trailing whitespace around the section name, the key, and the value 
 As a result, the following input files are all equivalent to each other for initool and produce the same output.
 The output is identical to the first input.
 
-```
+```ini
 [PHP]
 short_open_tag=Off
 ```
 
-```
+```ini
 [PHP]
 short_open_tag = Off
 ```
 
-```
+```ini
     [PHP]
         short_open_tag   =     Off
 ```
@@ -156,18 +157,18 @@ Because of this, you can reformat initool-compatible INI files with the command 
 
 How nonexistent sections and properties are handled depends on the command.
 
-* `get`
-    * **Result:** initool produces no output when the section or key does not exist.
-    * **Exit status:** 0 if the file, section, or property exists, 1 if it doesn't.
-* `exists`
-    * **Result:** No output.
-    * **Exit status:** 0 if the section or property exists, 1 if it doesn't.
-* `set`
-    * **Result:** The section and the property are created as needed.
-    * **Exit status:** 0.
-* `delete`
-    * **Result:** Nothing is removed from the input in the output.
-    * **Exit status:** 0 if the section or property was deleted, 1 if it wasn't.
+- `get`
+  - **Result:** initool produces no output when the section or key does not exist.
+  - **Exit status:** 0 if the file, section, or property exists, 1 if it doesn't.
+- `exists`
+  - **Result:** No output.
+  - **Exit status:** 0 if the section or property exists, 1 if it doesn't.
+- `set`
+  - **Result:** The section and the property are created as needed.
+  - **Exit status:** 0.
+- `delete`
+  - **Result:** Nothing is removed from the input in the output.
+  - **Exit status:** 0 if the section or property was deleted, 1 if it wasn't.
 
 ### Line endings
 
@@ -196,8 +197,14 @@ It correctly processes UTF-8-encoded files when given UTF-8 command-line argumen
 On Windows, it will receive the command-line arguments in the encoding for your system's language for non-Unicode programs (e.g., [Windows-1252](https://en.wikipedia.org/wiki/Windows-1252)),
 which limits what you can do with UTF-8-encoded files.
 
-
 ## Building and installation
+
+### Docker
+
+The simplest way to build this image is to run the default Dockerfile build command: `docker build -t initool:latest .`
+After build, if you want to use `initool` as a one-off, you can use the `docker run -it --user 1000:1000 -w "/tmp" -v "${PWD}:/tmp" --rm initool:latest` command.
+You can pass in any other initool parameters after that, as usual. Alternatively, if you want to use `initool` repeatedly from the command line,
+you can define an alias for it, like `alias initool='docker run -it --user 1000:1000 -w "/tmp" -v "${PWD}:/tmp"  --rm initool:latest'`; then you can run commands like `initool -v` as usual.
 
 ### FreeBSD, MacPorts port
 
@@ -226,7 +233,6 @@ I have [mirrored the installer](https://github.com/kfl/mosml/issues/49#issuecomm
 Clone the repository and run `build.cmd` from its directory.
 
 The test suite currently does not work on Windows.
-
 
 ## License
 
