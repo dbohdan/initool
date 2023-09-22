@@ -6,6 +6,7 @@
 Initool lets you manipulate the contents of INI files from the command line.
 Rather than modify an INI file in place, it prints the modified contents of the file to standard output.
 
+
 ## Contents
 
 - [initool](#initool)
@@ -23,11 +24,12 @@ Rather than modify an INI file in place, it prints the modified contents of the 
     - [Repeated items](#repeated-items)
     - [Text encodings](#text-encodings)
   - [Building and installation](#building-and-installation)
-    - [Docker](#docker)
     - [FreeBSD, MacPorts port](#freebsd-macports-port)
     - [Building on FreeBSD, Linux, macOS](#building-on-freebsd-linux-macos)
+    - [Building with Docker](#building-with-docker)
     - [Building on Windows](#building-on-windows)
   - [License](#license)
+
 
 ## Operation
 
@@ -197,14 +199,8 @@ It correctly processes UTF-8-encoded files when given UTF-8 command-line argumen
 On Windows, it will receive the command-line arguments in the encoding for your system's language for non-Unicode programs (e.g., [Windows-1252](https://en.wikipedia.org/wiki/Windows-1252)),
 which limits what you can do with UTF-8-encoded files.
 
+
 ## Building and installation
-
-### Docker
-
-The simplest way to build this image is to run the default Dockerfile build command: `docker build -t initool:latest .`
-After build, if you want to use `initool` as a one-off, you can use the `docker run -it --user 1000:1000 -w "/tmp" -v "${PWD}:/tmp" --rm initool:latest` command.
-You can pass in any other initool parameters after that, as usual. Alternatively, if you want to use `initool` repeatedly from the command line,
-you can define an alias for it, like `alias initool='docker run -it --user 1000:1000 -w "/tmp" -v "${PWD}:/tmp"  --rm initool:latest'`; then you can run commands like `initool -v` as usual.
 
 ### FreeBSD, MacPorts port
 
@@ -221,6 +217,40 @@ Clone the repository and run `make` then `sudo make install` in it.
 Initool will be installed in `/usr/local/bin`.
 Run `sudo make uninstall` to remove it.
 
+### Building with Docker
+
+You can build and run initool using Docker.
+
+To build a Docker image for initool,
+clone the repository,
+`cd` to its directory,
+then run the build command:
+
+```sh
+docker build -t initool:latest .
+```
+
+Wait for the build to finish.
+Once it succeeds,
+you can run initool from the Docker image you have built.
+
+The following Docker command runs initool and gives it access to the current directory:
+
+```sh
+docker run --rm --user "$(id -u):$(id -g)" --volume "$PWD:/mnt/" --workdir /mnt/ initool:latest help
+```
+
+Pass in arguments to initool after `initool:latest`.
+You may notice a delay when starting initool in a Docker container.
+
+If you plan to use initool repeatedly,
+you have the option to copy the binary to your Linux system.
+This command copies the binary to the current directory:
+
+```sh
+docker run --entrypoint /bin/sh --rm --user "$(id -u):$(id -g)" --volume "$PWD:/mnt/" --workdir /mnt/ initool:latest -c 'cp /app/initool/initool /mnt/'
+```
+
 ### Building on Windows
 
 Prebuilt Windows (x86) binaries are attached to
@@ -233,6 +263,7 @@ I have [mirrored the installer](https://github.com/kfl/mosml/issues/49#issuecomm
 Clone the repository and run `build.cmd` from its directory.
 
 The test suite currently does not work on Windows.
+
 
 ## License
 
