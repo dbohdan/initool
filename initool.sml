@@ -39,7 +39,6 @@ fun exitWithError (output: string) (err: string) =
 datatype result =
   Output of string
 | FailureOutput of string
-| Notification of string
 | Error of string
 
 fun processFileCustom quiet successFn filterFn filename =
@@ -93,7 +92,7 @@ fun formatArgs (args: string list) =
     String.concatWith " " (List.map quoteArg args)
   end
 
-fun helpCommand [] = Notification allUsage
+fun helpCommand [] = Output allUsage
   | helpCommand [_] = helpCommand []
   | helpCommand (cmd :: rest) =
       Error (invalidUsage ^ (formatArgs (cmd :: rest)) ^ "\n" ^ usage ^ cmd)
@@ -275,7 +274,6 @@ val _ =
   case result of
     Output s => printFlush TextIO.stdOut s
   | FailureOutput s => exitWithError s ""
-  | Notification s => printFlush TextIO.stdErr s
   | Error s => exitWithError "" s
 
 val _ = OS.Process.exit (OS.Process.success)
