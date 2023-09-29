@@ -1,12 +1,35 @@
 name: CI
 on: [push]
 jobs:
-  test:
+  linux:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
-      uses: actions/checkout@v1
+      uses: actions/checkout@v3
     - name: Install dependencies
       run: sudo apt-get update && sudo apt-get install -y libgmp-dev
     - name: Run CI script
       run: ./ci.sh
+  windows:
+    runs-on: windows-2019
+    steps:
+      - name: 'Disable `autocrlf` in Git'
+        run: git config --global core.autocrlf false
+      - uses: actions/checkout@v3
+      - name: Set up MoSML
+        shell: cmd
+        run: |
+          mkdir c:\mosml
+          curl -o c:\mosml\mosml.7z https://dbohdan.com/dist/mosml-2.10.1-win32.7z
+          pushd c:\mosml & 7z x mosml.7z & popd
+      - name: Build initool
+        shell: cmd
+        run: build.cmd /batch /package
+      - name: Test initool
+        shell: cmd
+        run: initool.exe version
+      - name: Upload Win32 binary
+        uses: actions/upload-artifact@v3
+        with:
+          name: initool-win32
+          path: 'initool-*.zip'
