@@ -22,15 +22,13 @@ jobs:
           Invoke-WebRequest -Uri https://dbohdan.com/dist/mosml-2.10.1-win32.7z -OutFile C:\mosml\mosml.7z
           7z x -oC:\mosml C:\mosml\mosml.7z
       - name: Build initool
-        shell: cmd
-        run: build.cmd /batch /package
+        run: .\build.cmd /batch /package
+      - name: Check that initool runs
+        run: .\initool.exe version
       - name: Add artifact filename to env
         run: |
           $artifactFilename = (Get-ChildItem -Filter *.zip | Select-Object -First 1).Name
           Write-Output "artifactFilename=$artifactFilename" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-      - name: Check that initool runs
-        shell: cmd
-        run: initool.exe version
       - name: Upload Win32 binary
         uses: actions/upload-artifact@v3
         with:
