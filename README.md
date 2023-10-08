@@ -253,6 +253,12 @@ docker run --entrypoint /bin/sh --rm --user "$(id -u):$(id -g)" --volume "$PWD:/
 Prebuilt Windows (x86) binaries are attached to
 [releases](https://github.com/dbohdan/initool/releases).
 
+Initool can be installed with Chocolatey:
+
+```batch
+choco install initool
+```
+
 To build initool yourself, first install [MoSML](http://mosml.org).
 The Windows installer is not available on the official site due to an antivirus false positive.
 I have [mirrored the installer](https://github.com/kfl/mosml/issues/49#issuecomment-368878055) in an attachment to a GitHub comment.
