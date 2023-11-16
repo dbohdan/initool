@@ -36,10 +36,7 @@ fun exitWithError (output: string) (err: string) =
     OS.Process.exit (OS.Process.failure)
   end
 
-datatype result =
-  Output of string
-| FailureOutput of string
-| Error of string
+datatype result = Output of string | FailureOutput of string | Error of string
 
 fun processFileCustom quiet successFn filterFn filename =
   let
@@ -98,7 +95,7 @@ fun helpCommand [] = Output allUsage
       Error (invalidUsage ^ (formatArgs (cmd :: rest)) ^ "\n" ^ usage ^ cmd)
 
 fun versionCommand [] =
-      let val version = "0.14.0"
+      let val version = "0.14.1"
       in Output (version ^ "\n")
       end
   | versionCommand [_] = versionCommand []
@@ -207,13 +204,11 @@ fun deleteCommand (opts: Id.options) [_, filename, section] =
   | deleteCommand opts [_, filename, section, key] =
       (* Delete property *)
       let
-        val q =
-          Ini.RemoveProperty
-            { section = Id.fromStringWildcard section
-            , key = Id.fromStringWildcard key
-            }
+        val section = Id.fromStringWildcard section
+        val key = Id.fromStringWildcard key
+        val q = Ini.RemoveProperty {section = section, key = key}
         val successFn = fn (parsed, _) =>
-          Ini.sectionExists opts (Id.fromStringWildcard section) parsed
+          Ini.propertyExists opts section key parsed
       in
         processFile successFn (Ini.select opts q) filename
       end

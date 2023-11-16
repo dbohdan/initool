@@ -143,8 +143,9 @@ struct
     end
 
   fun stringify (ini: ini_data) : string =
-    let val sections = map stringifySection ini
-    val concat = String.concatWith "\n" sections
+    let
+      val sections = map stringifySection ini
+      val concat = String.concatWith "\n" sections
     in
       if concat = "" then "" else concat ^ "\n"
     end
