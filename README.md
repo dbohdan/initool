@@ -24,6 +24,7 @@ Rather than modify an INI file in place, it prints the modified contents of the 
   - [FreeBSD, MacPorts port](#freebsd-macports-port)
   - [Building on FreeBSD, Linux, macOS](#building-on-freebsd-linux-macos)
   - [Building with Docker](#building-with-docker)
+  - [Running on Windows](#running-on-windows)
   - [Building on Windows](#building-on-windows)
 - [License](#license)
 
@@ -247,8 +248,7 @@ This command copies the binary to the current directory:
 ```sh
 docker run --entrypoint /bin/sh --rm --user "$(id -u):$(id -g)" --volume "$PWD:/mnt/" --workdir /mnt/ initool:latest -c 'cp /app/initool/initool /mnt/'
 ```
-
-### Building on Windows
+### Running on Windows
 
 Prebuilt Windows (x86) binaries are attached to
 [releases](https://github.com/dbohdan/initool/releases).
@@ -258,6 +258,8 @@ Initool can be installed with Chocolatey:
 ```batch
 choco install initool
 ```
+
+### Building on Windows
 
 To build initool yourself, first install [MoSML](http://mosml.org).
 The Windows installer is not available on the official site due to an antivirus false positive.
