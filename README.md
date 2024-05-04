@@ -22,8 +22,9 @@ Rather than modify an INI file in place, it prints the modified contents of the 
   - [Text encodings](#text-encodings)
 - [Building and installation](#building-and-installation)
   - [FreeBSD, MacPorts port](#freebsd-macports-port)
+  - [Running on Linux](#running-on-linux)
   - [Building on FreeBSD, Linux, macOS](#building-on-freebsd-linux-macos)
-  - [Building with Docker](#building-with-docker)
+  - [Building for Linux with Docker](#building-for-linux-with-docker)
   - [Running on Windows](#running-on-windows)
   - [Building on Windows](#building-on-windows)
 - [License](#license)
@@ -204,10 +205,15 @@ which limits what you can do with UTF-8-encoded files.
 
 You can install `sysutils/initool` from the FreeBSD ports tree and MacPorts.
 
+### Running on Linux
+
+Prebuilt Linux (x86-64) binaries are attached to
+[releases](https://github.com/dbohdan/initool/releases).
+
 ### Building on FreeBSD, Linux, macOS
 
 Install [MLton](http://mlton.org/).
-It is available as the package `mlton` in Fedora, FreeBSD, Homebrew, MacPorts, and
+It is available as the package `mlton` in Fedora, FreeBSD, Homebrew, MacPorts, Ubuntu 24.04, and
 [other repositories](https://repology.org/project/mlton/versions).
 On Debian 12 and Ubuntu 22.04, you will have to build MLton from source.
 
@@ -215,7 +221,7 @@ Clone the repository and run `make` then `sudo make install` in it.
 Initool will be installed in `/usr/local/bin`.
 Run `sudo make uninstall` to remove it.
 
-### Building with Docker
+### Building for Linux with Docker
 
 You can build and run initool using Docker.
 

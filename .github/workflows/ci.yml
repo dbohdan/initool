@@ -1,21 +1,31 @@
 name: CI
 on: [push, pull_request]
+
 jobs:
   linux:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - name: Install dependencies
       run: sudo apt-get update && sudo apt-get install -y libgmp-dev
     - name: Run CI script
       run: ./ci.sh
+    - name: Add artifact name to env
+      run: |
+        echo "ARTIFACT_NAME=initool-v$(cat VERSION)-$(git rev-parse --short=7 HEAD)-linux-$(uname -i)" >> "$GITHUB_ENV"
+    - name: Upload Linux binary
+      uses: actions/upload-artifact@v4
+      with:
+        name: '${{ env.ARTIFACT_NAME }}'
+        path: initool
+
   windows:
     runs-on: windows-2019
     steps:
       - name: 'Disable `autocrlf` in Git'
         run: git config --global core.autocrlf false
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install MoSML
         run: |
           New-Item -ItemType Directory -Path C:\mosml -Force
@@ -25,15 +35,15 @@ jobs:
         run: .\build.cmd /batch /package
       - name: Check that initool runs
         run: .\initool.exe version
-      - name: Add artifact filename to env
+      - name: Add artifact name to env
         run: |
           $artifact = Get-ChildItem -Filter *.zip | Select-Object -First 1
-          Write-Output "artifactName=$($artifact.Basename)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          Write-Output "ARTIFACT_NAME=$($artifact.Basename)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           7z x -y $artifact
       - name: Upload Win32 binary
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: '${{ env.artifactName }}'
+          name: '${{ env.ARTIFACT_NAME }}'
           path: |
             camlrt.dll
             initool.exe
