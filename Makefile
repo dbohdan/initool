@@ -4,6 +4,8 @@ BINDIR=$(PREFIX)/bin
 
 all: test VERSION
 initool: initool.mlb stringtrim.sml ini.sml initool.sml
+	mlton initool.mlb
+initool-static: initool.mlb stringtrim.sml ini.sml initool.sml
 	mlton -link-opt -static initool.mlb
 VERSION: initool
 	./initool version > VERSION

@@ -9,4 +9,4 @@ fi
 tar xf "$mlton_ver".tgz
 PATH=$PATH:"$mlton_ver"/bin
 
-make test
+make initool-static test
