@@ -19,6 +19,26 @@ jobs:
       with:
         name: '${{ env.ARTIFACT_NAME }}'
         path: initool
+  
+  macos:
+    runs-on: macos-11
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Set up MacPorts
+      uses: melusina-org/setup-macports@v1
+    - name: Install MLton
+      run: sudo port install mlton
+    - name: Build and test
+      run: make test
+    - name: Add artifact name to env
+      run: |
+        echo "ARTIFACT_NAME=initool-v$(cat VERSION)-$(git rev-parse --short=7 HEAD)-macos-$(uname -m)" >> "$GITHUB_ENV"
+    - name: Upload macOS binary
+      uses: actions/upload-artifact@v4
+      with:
+        name: '${{ env.ARTIFACT_NAME }}'
+        path: initool
 
   windows:
     runs-on: windows-2019
