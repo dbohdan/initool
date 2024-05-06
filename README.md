@@ -21,11 +21,11 @@ Rather than modify an INI file in place, it prints the modified contents of the 
   - [Repeated items](#repeated-items)
   - [Text encodings](#text-encodings)
 - [Building and installation](#building-and-installation)
+  - [Prebuilt binaries](#prebuilt-binaries)
   - [FreeBSD, MacPorts port](#freebsd-macports-port)
-  - [Running on Linux](#running-on-linux)
+  - [Windows package](#windows-package)
   - [Building on FreeBSD, Linux, macOS](#building-on-freebsd-linux-macos)
   - [Building for Linux with Docker](#building-for-linux-with-docker)
-  - [Running on Windows](#running-on-windows)
   - [Building on Windows](#building-on-windows)
 - [License](#license)
 
@@ -201,14 +201,33 @@ which limits what you can do with UTF-8-encoded files.
 
 ## Building and installation
 
+### Prebuilt binaries
+
+Prebuilt binaries for Linux (x86-64), macOS (ARM64 and x86-64), and Windows (x86)
+are attached to
+[releases](https://github.com/dbohdan/initool/releases).
+Additionally, CI builds a set of test binaries for every Git push.
+
+To use a prebuilt macOS binary,
+you will need to install GMP from Homebrew (`brew install gmp`).
+Once you have extracted `initool` from the archive,
+you may need to run the command
+
+```sh
+xattr -d com.apple.quarantine initool
+```
+
 ### FreeBSD, MacPorts port
 
 You can install `sysutils/initool` from the FreeBSD ports tree and MacPorts.
 
-### Running on Linux
+### Windows package
 
-Prebuilt Linux (x86-64) binaries are attached to
-[releases](https://github.com/dbohdan/initool/releases).
+Initool can be installed with Chocolatey:
+
+```batch
+choco install initool
+```
 
 ### Building on FreeBSD, Linux, macOS
 
@@ -253,16 +272,6 @@ This command copies the binary to the current directory:
 
 ```sh
 docker run --entrypoint /bin/sh --rm --user "$(id -u):$(id -g)" --volume "$PWD:/mnt/" --workdir /mnt/ initool:latest -c 'cp /app/initool/initool /mnt/'
-```
-### Running on Windows
-
-Prebuilt Windows (x86) binaries are attached to
-[releases](https://github.com/dbohdan/initool/releases).
-
-Initool can be installed with Chocolatey:
-
-```batch
-choco install initool
 ```
 
 ### Building on Windows
