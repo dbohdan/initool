@@ -13,7 +13,13 @@ jobs:
       run: ./ci.sh
     - name: Add artifact name to env
       run: |
-        echo "ARTIFACT_NAME=initool-v$(cat VERSION)-$(git rev-parse --short=7 HEAD)-linux-$(uname -i)" >> "$GITHUB_ENV"
+        printf \
+          'ARTIFACT_NAME=initool-%s-%s-linux-%s\n' \
+          "$(cat VERSION)" \
+          "$(git rev-parse --short=7 HEAD)" \
+          "$(uname -m)" \
+          >>"$GITHUB_ENV" \
+          ;
     - name: Upload Linux binary
       uses: actions/upload-artifact@v4
       with:
@@ -21,7 +27,7 @@ jobs:
         path: initool
   
   macos:
-    runs-on: ${{ matrix.os }}
+    runs-on: '${{ matrix.os }}'
     strategy:
       matrix:
         os: ["macos-11", "macos-14"]
@@ -34,7 +40,14 @@ jobs:
       run: make test
     - name: Add artifact name to env
       run: |
-        echo "ARTIFACT_NAME=initool-v$(cat VERSION)-$(git rev-parse --short=7 HEAD)-macos-$(uname -m)" >> "$GITHUB_ENV"
+        printf \
+          'ARTIFACT_NAME=initool-%s-%s-macos-%s-%s\n' \
+          "$(cat VERSION)" \
+          "$(git rev-parse --short=7 HEAD)" \
+          "$(sw_vers | awk '/ProductVersion/ { print substr($2, 1, index($2, ".") - 1) }')" \
+          "$(uname -m)" \
+          >>"$GITHUB_ENV" \
+          ;
     - name: Upload macOS binary
       uses: actions/upload-artifact@v4
       with:
@@ -59,7 +72,8 @@ jobs:
       - name: Add artifact name to env
         run: |
           $artifact = Get-ChildItem -Filter *.zip | Select-Object -First 1
-          Write-Output "ARTIFACT_NAME=$($artifact.Basename)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          Write-Output "ARTIFACT_NAME=$($artifact.Basename)" `
+            | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           7z x -y $artifact
       - name: Upload Win32 binary
         uses: actions/upload-artifact@v4
