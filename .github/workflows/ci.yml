@@ -25,10 +25,8 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-    - name: Set up MacPorts
-      uses: melusina-org/setup-macports@v1
     - name: Install MLton
-      run: sudo port install mlton
+      run: brew install mlton
     - name: Build and test
       run: make test
     - name: Add artifact name to env
