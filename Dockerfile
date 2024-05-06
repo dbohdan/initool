@@ -5,7 +5,7 @@ RUN apt-get update \
 
 ADD . /build/initool/
 WORKDIR /build/initool/
-RUN ./ci.sh
+RUN ./linux-ci.sh
 
 FROM debian:bookworm-slim
 RUN mkdir -p /app/initool/
