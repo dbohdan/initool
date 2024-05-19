@@ -14,7 +14,7 @@ jobs:
     - name: Add artifact name to env
       run: |
         printf \
-          'ARTIFACT_NAME=initool-%s-%s-linux-%s\n' \
+          'ARTIFACT_NAME=initool-v%s-%s-linux-%s\n' \
           "$(cat VERSION)" \
           "$(git rev-parse --short=7 HEAD)" \
           "$(uname -m)" \
@@ -45,7 +45,7 @@ jobs:
     - name: Add artifact name to env
       run: |
         printf \
-          'ARTIFACT_NAME=initool-%s-%s-macos-%s-%s\n' \
+          'ARTIFACT_NAME=initool-v%s-%s-macos-%s-%s\n' \
           "$(cat VERSION)" \
           "$(git rev-parse --short=7 HEAD)" \
           "$(sw_vers | awk '/ProductVersion/ { print substr($2, 1, index($2, ".") - 1) }')" \
