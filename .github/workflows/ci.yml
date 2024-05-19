@@ -34,10 +34,14 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-    - name: Install MLton
-      run: brew install mlton
+    - name: Install dependencies
+      run: brew install dylibbundler mlton
     - name: Build and test
-      run: make test
+      run: |
+        make
+    - name: Bundle dynamic libraries
+      run: |
+        dylibbundler --bundle-deps --create-dir --fix-file initool
     - name: Add artifact name to env
       run: |
         printf \
@@ -52,7 +56,9 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: '${{ env.ARTIFACT_NAME }}'
-        path: initool
+        path: |
+          initool
+          libs/
 
   windows:
     runs-on: windows-2019
