@@ -222,12 +222,21 @@ which limits what you can do with UTF-8-encoded files.
 Prebuilt binaries for Linux (x86-64), macOS (ARM64 and x86-64), and Windows (x86)
 are attached to
 [releases](https://github.com/dbohdan/initool/releases).
-Additionally, CI builds a set of test binaries for every Git push.
+CI also builds a set of test binaries for every Git push.
+
+BSD, Linux, and macOS binaries are not marked as executable because of a
+[limitation of `@actions/upload-artifact`](https://github.com/actions/upload-artifact/issues/38).
+Extract the archive and run the command
+
+```sh
+chmod +x initool
+```
 
 To use a prebuilt macOS binary,
-you will need to install GMP from Homebrew (`brew install gmp`).
-Once you have extracted `initool` from the archive,
-you may need to run the command
+you will need to install
+[GMP](https://en.wikipedia.org/wiki/GNU_Multiple_Precision_Arithmetic_Library)
+from Homebrew (`brew install gmp`).
+You may need to run the following command once you have extracted `initool` from the archive:
 
 ```sh
 xattr -d com.apple.quarantine initool
