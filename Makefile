@@ -18,4 +18,4 @@ install: initool
 	install initool $(DESTDIR)$(BINDIR)
 uninstall:
 	rm $(DESTDIR)$(BINDIR)/initool
-.PHONY: all clean test install uninstall
+.PHONY: all clean initool-static test install uninstall
