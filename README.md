@@ -61,6 +61,16 @@ To do something with a property, you must give initool the correct section name.
 Section names and keys are [case-sensitive](#case-sensitivity) by default.
 The global option `-i` or `--ignore-case` makes commands not distinguish between lower-case and upper-case [ASCII](https://en.wikipedia.org/wiki/ASCII) letters "A" through "Z" in section names and keys.
 
+Do not include the square brackets in the section argument.
+
+```sh
+# Right.
+initool get tests/test.ini foo
+
+# Wrong.
+initool get tests/test.ini [foo]
+```
+
 Top-level properties (properties not in any section) are accessed by using an empty string as the section name.
 The `exists` command with just an empty string as the argument tells you whether or not there are any top-level properties.
 
