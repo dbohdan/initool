@@ -1,7 +1,11 @@
 (* initool -- manipulate the contents of INI files from the command line
- * Copyright (c) 2015-2018, 2023 D. Bohdan
+ * Copyright (c) 2015-2018, 2023-2024 D. Bohdan
  * License: MIT
  *)
+
+type options = {ignoreCase: bool, passThrough: bool}
+
+fun idOptions (opts: options) : Id.options = {ignoreCase = #ignoreCase opts}
 
 fun readLines (filename: string) : string list =
   let
@@ -38,9 +42,9 @@ fun exitWithError (output: string) (err: string) =
 
 datatype result = Output of string | FailureOutput of string | Error of string
 
-fun processFileCustom quiet successFn filterFn filename =
+fun processFileCustom quiet passThrough successFn filterFn filename =
   let
-    val parsed = (Ini.parse o readLines) filename
+    val parsed = Ini.parse passThrough (readLines filename)
     val filtered = filterFn parsed
     val success = successFn (parsed, filtered)
     val output = if quiet then "" else Ini.stringify filtered
@@ -63,7 +67,8 @@ val unknownCommand = "unknown command: "
 val usage = "usage: "
 
 val allUsage =
-  (usage ^ "initool [-i|--ignore-case] <command> [<arg> ...]\n\n" ^ "commands:"
+  (usage ^ "initool [-i|--ignore-case] [-p|--pass-through] "
+   ^ "<command> [<arg> ...]\n\n" ^ "commands:"
    ^
    (String.concatWith "\n    "
       [ ""
@@ -95,32 +100,32 @@ fun helpCommand [] = Output allUsage
       Error (invalidUsage ^ (formatArgs (cmd :: rest)) ^ "\n" ^ usage ^ cmd)
 
 fun versionCommand [] =
-      let val version = "0.14.1"
+      let val version = "0.15.0"
       in Output (version ^ "\n")
       end
   | versionCommand [_] = versionCommand []
   | versionCommand (cmd :: rest) =
       Error (invalidUsage ^ (formatArgs (cmd :: rest)) ^ "\n" ^ usage ^ cmd)
 
-fun getCommand (opts: Id.options) [_, filename] =
-      processFile (fn _ => true) (fn x => x) filename
+fun getCommand (opts: options) [_, filename] =
+      processFile (#passThrough opts) (fn _ => true) (fn x => x) filename
   | getCommand opts [_, filename, section] =
       (* Get section *)
-      processFile (fn (_, filtered) => filtered <> [])
-        (Ini.select opts ((Ini.SelectSection o Id.fromStringWildcard) section))
-        filename
+      processFile (#passThrough opts) (fn (_, filtered) => filtered <> [])
+        (Ini.select (idOptions opts)
+           ((Ini.SelectSection o Id.fromStringWildcard) section)) filename
   | getCommand opts [_, filename, section, key] =
       (* Get property *)
       let
         val section = Id.fromStringWildcard section
         val key = Id.fromStringWildcard key
         val successFn = fn (_, filtered) =>
-          Ini.propertyExists opts section key filtered
+          Ini.propertyExists (idOptions opts) section key filtered
         val q = Ini.SelectProperty {section = section, key = key}
         val filterFn = fn sections =>
-          (Ini.removeEmptySections o (Ini.select opts q)) sections
+          (Ini.removeEmptySections o (Ini.select (idOptions opts) q)) sections
       in
-        processFile successFn filterFn filename
+        processFile (#passThrough opts) successFn filterFn filename
       end
   | getCommand opts [cmd, filename, section, key, "-v"] =
       getCommand opts [cmd, filename, section, key, "--value-only"]
@@ -130,9 +135,11 @@ fun getCommand (opts: Id.options) [_, filename] =
         val section = Id.fromStringWildcard section
         val key = Id.fromStringWildcard key
         val successFn = fn (_, filtered) =>
-          Ini.propertyExists opts section key filtered
+          Ini.propertyExists (idOptions opts) section key filtered
         val q = Ini.SelectProperty {section = section, key = key}
-        val parsed = ((Ini.select opts q) o Ini.parse o readLines) filename
+        val parsed =
+          ((Ini.select (idOptions opts) q) o (Ini.parse (#passThrough opts))
+           o readLines) filename
         val allItems = List.concat
           (List.map (fn {name = _, contents = xs} => xs) parsed)
         val values =
@@ -150,13 +157,14 @@ fun getCommand (opts: Id.options) [_, filename] =
   | getCommand opts [] = getCommand opts ["get"]
 
 
-fun existsCommand (opts: Id.options) [_, filename, section] =
+fun existsCommand (opts: options) [_, filename, section] =
       (* Section exists *)
       let
         val successFn = fn (parsed, _) =>
-          Ini.sectionExists opts (Id.fromStringWildcard section) parsed
+          Ini.sectionExists (idOptions opts) (Id.fromStringWildcard section)
+            parsed
       in
-        processFileQuiet successFn (fn x => x) filename
+        processFileQuiet (#passThrough opts) successFn (fn x => x) filename
       end
   | existsCommand opts [_, filename, section, key] =
       (* Property exists *)
@@ -164,9 +172,9 @@ fun existsCommand (opts: Id.options) [_, filename, section] =
         val section = Id.fromStringWildcard section
         val key = Id.fromStringWildcard key
         val successFn = fn (parsed, _) =>
-          Ini.propertyExists opts section key parsed
+          Ini.propertyExists (idOptions opts) section key parsed
       in
-        processFileQuiet successFn (fn x => x) filename
+        processFileQuiet (#passThrough opts) successFn (fn x => x) filename
       end
   | existsCommand opts (cmd :: rest) =
       Error
@@ -174,7 +182,7 @@ fun existsCommand (opts: Id.options) [_, filename, section] =
          ^ existsUsage)
   | existsCommand opts [] = existsCommand opts ["exists"]
 
-fun setCommand (opts: Id.options) [_, filename, section, key, value] =
+fun setCommand (opts: options) [_, filename, section, key, value] =
       (* Set value *)
       let
         val update =
@@ -183,7 +191,8 @@ fun setCommand (opts: Id.options) [_, filename, section, key, value] =
                [Ini.Property {key = Id.fromStringWildcard key, value = value}]
            }]
       in
-        processFile (fn _ => true) (Ini.merge opts update) filename
+        processFile (#passThrough opts) (fn _ => true)
+          (Ini.merge (idOptions opts) update) filename
       end
   | setCommand opts (cmd :: rest) =
       Error
@@ -191,15 +200,16 @@ fun setCommand (opts: Id.options) [_, filename, section, key, value] =
          ^ setUsage)
   | setCommand opts [] = setCommand opts ["set"]
 
-fun deleteCommand (opts: Id.options) [_, filename, section] =
+fun deleteCommand (opts: options) [_, filename, section] =
       (* Delete section *)
       let
         val successFn = fn (parsed, _) =>
-          Ini.sectionExists opts (Id.fromStringWildcard section) parsed
+          Ini.sectionExists (idOptions opts) (Id.fromStringWildcard section)
+            parsed
       in
-        processFile successFn
-          (Ini.select opts (Ini.RemoveSection (Id.fromStringWildcard section)))
-          filename
+        processFile (#passThrough opts) successFn
+          (Ini.select (idOptions opts)
+             (Ini.RemoveSection (Id.fromStringWildcard section))) filename
       end
   | deleteCommand opts [_, filename, section, key] =
       (* Delete property *)
@@ -208,9 +218,10 @@ fun deleteCommand (opts: Id.options) [_, filename, section] =
         val key = Id.fromStringWildcard key
         val q = Ini.RemoveProperty {section = section, key = key}
         val successFn = fn (parsed, _) =>
-          Ini.propertyExists opts section key parsed
+          Ini.propertyExists (idOptions opts) section key parsed
       in
-        processFile successFn (Ini.select opts q) filename
+        processFile (#passThrough opts) successFn
+          (Ini.select (idOptions opts) q) filename
       end
   | deleteCommand opts (cmd :: rest) =
       Error
@@ -218,7 +229,7 @@ fun deleteCommand (opts: Id.options) [_, filename, section] =
          ^ deleteUsage)
   | deleteCommand opts [] = deleteCommand opts ["delete"]
 
-fun processArgs (opts: Id.options) [] = helpCommand []
+fun processArgs (opts: options) [] = helpCommand []
   | processArgs opts ("h" :: args) =
       helpCommand ("h" :: args)
   | processArgs opts ("-h" :: args) =
@@ -238,9 +249,13 @@ fun processArgs (opts: Id.options) [] = helpCommand []
   | processArgs opts ("version" :: args) =
       versionCommand ("version" :: args)
   | processArgs opts ("-i" :: args) =
-      processArgs {ignoreCase = true} args
+      processArgs {ignoreCase = true, passThrough = #passThrough opts} args
   | processArgs opts ("--ignore-case" :: args) =
-      processArgs {ignoreCase = true} args
+      processArgs {ignoreCase = true, passThrough = #passThrough opts} args
+  | processArgs opts ("-p" :: args) =
+      processArgs {ignoreCase = #ignoreCase opts, passThrough = true} args
+  | processArgs opts ("--pass-through" :: args) =
+      processArgs {ignoreCase = #ignoreCase opts, passThrough = true} args
   | processArgs opts ("g" :: args) =
       getCommand opts ("g" :: args)
   | processArgs opts ("get" :: args) =
@@ -263,7 +278,7 @@ fun processArgs (opts: Id.options) [] = helpCommand []
 val args = CommandLine.arguments ()
 
 val result =
-  processArgs {ignoreCase = false} args
+  processArgs {ignoreCase = false, passThrough = false} args
   handle Ini.Tokenization (message) => exitWithError "" ("Error: " ^ message)
 val _ =
   case result of

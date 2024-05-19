@@ -1,6 +1,6 @@
 # initool
 
-[![GitHub Actions CI status.](https://github.com/dbohdan/initool/actions/workflows/ci.yml/badge.svg)](https://github.com/dbohdan/initool/actions/workflows/ci.yml)&nbsp;
+[![GitHub Actions CI status.](https://github.com/dbohdan/initool/actions/workflows/ci.yml/badge.svg)](https://github.com/dbohdan/initool/actions/workflows/ci.yml)
 
 Initool lets you manipulate the contents of INI files from the command line.
 Rather than modify an INI file in place, it prints the modified contents of the file to standard output.
@@ -16,6 +16,7 @@ Rather than modify an INI file in place, it prints the modified contents of the 
     - [Both](#both)
   - [Whitespace](#whitespace)
   - [Nonexistent sections and properties](#nonexistent-sections-and-properties)
+  - [Unparsable lines](#unparsable-lines)
   - [Line endings](#line-endings)
   - [Case sensitivity](#case-sensitivity)
   - [Repeated items](#repeated-items)
@@ -35,7 +36,7 @@ Rather than modify an INI file in place, it prints the modified contents of the 
 ### Usage
 
 ```none
-initool [-i|--ignore-case] <command> [<arg> ...]
+initool [-i|--ignore-case] [-p|--pass-through] <command> [<arg> ...]
 ```
 
 The following commands are available:
@@ -48,7 +49,7 @@ The following commands are available:
 - `version` — print the version number.
 
 Commands can be abbreviated to their first letter: `g`, `e`, `s`, `d`, `h`, `v`.
-The global option `-i` or `--ignore-case` must precede the command name.
+The global options `-i`/`--ignore-case` and `-p`/`--pass-through` must precede the command name.
 
 When given a valid command, initool first reads the INI file `filename` in its entirety.
 If the filename is `-`, initool reads standard input. For the commands `get`, `delete`, and `set`, it then prints to standard output the file's contents with the desired change.
@@ -170,6 +171,21 @@ How nonexistent sections and properties are handled depends on the command.
 - `delete`
   - **Result:** Nothing is removed from the input in the output.
   - **Exit status:** 0 if the section or property was deleted, 1 if it wasn't.
+
+### Unparsable lines
+
+When initool encounters a line it cannot parse,
+it normally exits with an error.
+This prevents problems caused by working on a malformed or non-INI file:
+getting bogus data out of the file and corrupting the file by applying changes.
+The global option `-p` or `--pass-through` disables the error and instead makes initool read and write lines verbatim when it fails to parse them.
+Like comments, verbatim lines are treated as parts of their respective sections.
+
+Use pass-through mode at your own risk.
+You will not be alerted about syntax errors.
+It may lead to surprising results.
+For example, if a section header contains a typo like `[foo[`,
+the properties in that section will be treated as belonging to the previous section.
 
 ### Line endings
 

@@ -1,5 +1,5 @@
 (* initool -- manipulate the contents of INI files from the command line
- * Copyright (c) 2015-2018, 2023 D. Bohdan
+ * Copyright (c) 2015-2018, 2023-2024 D. Bohdan
  * License: MIT
  *)
 
@@ -41,7 +41,11 @@ structure Ini =
 struct
   (* Model an INI file starting with key=value pairs. *)
   type property = {key: Id.id, value: string}
-  datatype item = Property of property | Empty | Comment of string
+  datatype item =
+    Property of property
+  | Empty
+  | Comment of string
+  | Verbatim of string
   type section = {name: Id.id, contents: item list}
   type ini_data = section list
 
@@ -50,6 +54,7 @@ struct
   | EmptyLine
   | PropertyLine of property
   | SectionLine of section
+  | VerbatimLine of string
   datatype operation =
     Noop
   | SelectSection of Id.id
@@ -61,8 +66,8 @@ struct
 
   exception Tokenization of string
 
-  (* A very rough tokenizer for INI lines. *)
-  fun tokenizeLine (rawLine: string) : line_token =
+  (* A rough tokenizer for INI lines. *)
+  fun tokenizeLine (passThrough: bool) (rawLine: string) : line_token =
     let
       fun split c s =
         let
@@ -82,7 +87,9 @@ struct
       val keyAndValue = List.map trimWhitespace (split #"=" line)
     in
       case (line, isComment, isSection, keyAndValue) of
-        ("[]", _, _, _) => raise Tokenization ("empty section name")
+        ("[]", _, _, _) =>
+          if passThrough then VerbatimLine "[]"
+          else raise Tokenization ("empty section name")
       | (_, true, _, _) => CommentLine (line)
       | (_, false, true, _) =>
           let
@@ -94,11 +101,15 @@ struct
       | ("", false, false, _) => EmptyLine
       | (_, false, false, key :: value) =>
           (case value of
-             [] => raise Tokenization ("invalid line: \"" ^ line ^ "\"")
+             [] =>
+               if passThrough then VerbatimLine line
+               else raise Tokenization ("invalid line: \"" ^ line ^ "\"")
            | _ =>
                PropertyLine
                  {key = Id.fromString key, value = String.concatWith "=" value})
-      | (_, false, false, _) => raise Tokenization ("invalid line: " ^ line)
+      | (_, false, false, _) =>
+          raise Tokenization
+            ("this should never be reached; line: \"" ^ line ^ "\"")
     end
 
   (* Transform a list of tokens into a simple AST for the INI file. *)
@@ -119,10 +130,12 @@ struct
       | CommentLine (comment) :: xs =>
           makeSections xs (addItem (Comment comment) acc)
       | EmptyLine :: xs => makeSections xs (addItem Empty acc)
+      | VerbatimLine (comment) :: xs =>
+          makeSections xs (addItem (Verbatim comment) acc)
     end
 
-  fun parse (lines: string list) : ini_data =
-    let val tokenizedLines = map tokenizeLine lines
+  fun parse (passThrough: bool) (lines: string list) : ini_data =
+    let val tokenizedLines = map (tokenizeLine passThrough) lines
     in makeSections tokenizedLines []
     end
 
@@ -133,6 +146,7 @@ struct
           Property prop => Id.toString (#key prop) ^ "=" ^ (#value prop)
         | Comment c => c
         | Empty => ""
+        | Verbatim s => s
       val header =
         case Id.toString (#name sec) of
           "" => ""
@@ -165,19 +179,23 @@ struct
       | (SelectSection osn, _) => matches osn sectionName
       | (SelectProperty {section = osn, key = okey}, Property {key, value = _}) =>
           matches osn sectionName andalso matches okey key
-      | (SelectProperty {section = osn, key = okey}, Comment c) => false
+      | (SelectProperty {section = osn, key = okey}, Comment _) => false
       | (SelectProperty {section = osn, key = okey}, Empty) => false
+      | (SelectProperty {section = osn, key = okey}, Verbatim _) => false
       | (RemoveSection osn, _) => not (matches osn sectionName)
       | (RemoveProperty {section = osn, key = okey}, Property {key, value = _}) =>
           not (matches osn sectionName andalso matches okey key)
       | (RemoveProperty {section = osn, key = okey}, Comment _) => true
       | (RemoveProperty {section = osn, key = okey}, Empty) => true
+      | (RemoveProperty {section = osn, key = okey}, Verbatim _) => true
       | ( UpdateProperty {section = osn, key = okey, newValue = nv}
         , Property {key, value = _}
         ) => matches osn sectionName andalso matches okey key
       | (UpdateProperty {section = osn, key = okey, newValue = nv}, Comment _) =>
           false
       | (UpdateProperty {section = osn, key = okey, newValue = nv}, Empty) =>
+          false
+      | (UpdateProperty {section = osn, key = okey, newValue = nv}, Verbatim _) =>
           false
     end
 
