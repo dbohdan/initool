@@ -220,8 +220,11 @@ Commands act on all of them at the same time.
 ### Text encodings
 
 Initool is encoding-naive and assumes one character is one byte.
-It correctly processes UTF-8-encoded files when given UTF-8 command-line arguments but can't open files in UTF-16 or UTF-32.
-On Windows, it will receive the command-line arguments in the encoding for your system's language for non-Unicode programs (e.g., [Windows-1252](https://en.wikipedia.org/wiki/Windows-1252)),
+It correctly processes UTF-8-encoded files when given UTF-8 command-line arguments.
+It exits with an encoding error if it detects the UTF-16 or UTF-32 [BOM](https://en.wikipedia.org/wiki/Byte_order_mark).
+Trying to open a UTF-16 or UTF-32 file without the BOM results in an "invalid line" error because initool is unable to parse it.
+
+On Windows, initool will receive the command-line arguments in the encoding for your system's language for non-Unicode programs (e.g., [Windows-1252](https://en.wikipedia.org/wiki/Windows-1252)),
 which limits what you can do with UTF-8-encoded files.
 
 

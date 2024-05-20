@@ -3,9 +3,29 @@
  * License: MIT
  *)
 
-type options = {ignoreCase: bool, passThrough: bool}
+exception Encoding of string
 
-fun idOptions (opts: options) : Id.options = {ignoreCase = #ignoreCase opts}
+val unsupportedEncoding = "unsupported encoding: "
+
+fun checkWrongEncoding (lines: string list) =
+  let
+    val _ =
+      case lines of
+        [first] =>
+          (case map Char.ord (String.explode first) of
+             0x00 :: 0x00 :: 0xFE :: 0xFF :: _ =>
+               raise Encoding (unsupportedEncoding ^ "UTF-32 BE")
+           | 0xFF :: 0xFE :: 0x00 :: 0x00 :: _ =>
+               raise Encoding (unsupportedEncoding ^ "UTF-32 LE")
+           | 0xFE :: 0xFF :: _ =>
+               raise Encoding (unsupportedEncoding ^ "UTF-16 BE")
+           | 0xFF :: 0xFE :: _ =>
+               raise Encoding (unsupportedEncoding ^ "UTF-16 LE")
+           | _ => ())
+      | _ => ()
+  in
+    lines
+  end
 
 fun readLines (filename: string) : string list =
   let
@@ -44,7 +64,8 @@ datatype result = Output of string | FailureOutput of string | Error of string
 
 fun processFileCustom quiet passThrough successFn filterFn filename =
   let
-    val parsed = Ini.parse passThrough (readLines filename)
+    val parsed =
+      ((Ini.parse passThrough) o checkWrongEncoding o readLines) filename
     val filtered = filterFn parsed
     val success = successFn (parsed, filtered)
     val output = if quiet then "" else Ini.stringify filtered
@@ -100,12 +121,16 @@ fun helpCommand [] = Output allUsage
       Error (invalidUsage ^ (formatArgs (cmd :: rest)) ^ "\n" ^ usage ^ cmd)
 
 fun versionCommand [] =
-      let val version = "0.15.0"
+      let val version = "0.16.0"
       in Output (version ^ "\n")
       end
   | versionCommand [_] = versionCommand []
   | versionCommand (cmd :: rest) =
       Error (invalidUsage ^ (formatArgs (cmd :: rest)) ^ "\n" ^ usage ^ cmd)
+
+type options = {ignoreCase: bool, passThrough: bool}
+
+fun idOptions (opts: options) : Id.options = {ignoreCase = #ignoreCase opts}
 
 fun getCommand (opts: options) [_, filename] =
       processFile (#passThrough opts) (fn _ => true) (fn x => x) filename
@@ -139,7 +164,7 @@ fun getCommand (opts: options) [_, filename] =
         val q = Ini.SelectProperty {section = section, key = key}
         val parsed =
           ((Ini.select (idOptions opts) q) o (Ini.parse (#passThrough opts))
-           o readLines) filename
+           o checkWrongEncoding o readLines) filename
         val allItems = List.concat
           (List.map (fn {name = _, contents = xs} => xs) parsed)
         val values =
@@ -275,11 +300,16 @@ fun processArgs (opts: options) [] = helpCommand []
   | processArgs opts (cmd :: _) =
       Error (unknownCommand ^ (formatArgs [cmd]) ^ "\n" ^ availableCommands)
 
+fun handleException (message: string) =
+  exitWithError "" ("Error: " ^ message)
+
 val args = CommandLine.arguments ()
 
 val result =
   processArgs {ignoreCase = false, passThrough = false} args
-  handle Ini.Tokenization (message) => exitWithError "" ("Error: " ^ message)
+  handle
+    Encoding message => handleException message
+  | Ini.Tokenization message => handleException message
 val _ =
   case result of
     Output s => printFlush TextIO.stdOut s
