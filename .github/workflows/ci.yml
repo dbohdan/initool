@@ -30,7 +30,7 @@ jobs:
     runs-on: '${{ matrix.os }}'
     strategy:
       matrix:
-        os: ["macos-11", "macos-14"]
+        os: ["macos-12", "macos-14"]
     steps:
     - name: Checkout
       uses: actions/checkout@v4
