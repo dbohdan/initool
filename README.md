@@ -75,10 +75,12 @@ Top-level properties (properties not in any section) are accessed by using an em
 The `exists` command with just an empty string as the argument tells you whether or not there are any top-level properties.
 
 The section name and key can be `*` or `_` (a "wildcard") to match anything.
-For example, `set file.ini "*" foo bar` will set the key `foo` to the value `bar` in every existing section.
+Only `_` works on Windows.
+(Windows executables built with MoSML unavoidably expand `*` to a list of files.)
+For example, `set file.ini _ foo bar` will set the key `foo` to the value `bar` in every existing section.
 It will set the key `foo` at the top level if the file already has top-level properties.
-Windows executables built with MoSML unavoidably expand `*` to a list of files.
-Use `_` on Windows.
+To match a one-character section name or key that is `*` or `_`, use `\*` and `\_` respectively.
+An initial backslash is removed from the section-name and key argument.
 
 The order in which properties appear in the INI file is preserved.
 A new property is added after the last property in its section.
