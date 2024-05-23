@@ -30,7 +30,9 @@ struct
 
   fun fromStringWildcard "*" = Wildcard
     | fromStringWildcard "_" = Wildcard
-    | fromStringWildcard s = StrId s
+    | fromStringWildcard s =
+        if String.isPrefix "\\" s then StrId (String.extract (s, 1, NONE))
+        else StrId s
 
   fun toString id' =
     case id' of
