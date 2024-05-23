@@ -17,7 +17,7 @@ if not exist %mosmlc% (
     exit /b 1
 )
 
-rem Process the command line arguments.
+rem Process command-line arguments.
 set flag_batch=0
 set flag_package=0
 for %%a in (%*) do (

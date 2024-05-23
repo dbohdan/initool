@@ -322,8 +322,7 @@ I have [mirrored the installer](https://github.com/kfl/mosml/issues/49#issuecomm
 
 Clone the repository and run `build.cmd` from its directory.
 
-The test suite currently does not work on Windows.
-
+To test on Windows, download [busybox-w32](https://frippery.org/busybox/) to the repository directory as `busybox.exe`, then run `test.cmd`.
 
 ## License
 
