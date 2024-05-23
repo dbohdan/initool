@@ -1,7 +1,5 @@
 # initool
 
-[![GitHub Actions CI status.](https://github.com/dbohdan/initool/actions/workflows/ci.yml/badge.svg)](https://github.com/dbohdan/initool/actions/workflows/ci.yml)
-
 Initool lets you manipulate the contents of INI files from the command line.
 Rather than modify an INI file in place, it prints the modified contents of the file to standard output.
 
@@ -324,7 +322,7 @@ I have [mirrored the installer](https://github.com/kfl/mosml/issues/49#issuecomm
 
 Clone the repository and run `build.cmd` from its directory.
 
-To test on Windows, download [busybox-w32](https://frippery.org/busybox/) to the repository directory as `busybox.exe`, then run `test.cmd`.
+To test on Windows, download [busybox-w32](https://frippery.org/busybox/) as `busybox.exe` to the repository directory, then run `test.cmd`.
 
 ## License
 
