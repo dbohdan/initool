@@ -1,7 +1,7 @@
-$INITOOL d tests/comments.ini '' a0
+"$INITOOL" d tests/comments.ini '' a0
 echo -----
-$INITOOL d tests/comments.ini '' a1
+"$INITOOL" d tests/comments.ini '' a1
 echo -----
-$INITOOL d tests/comments.ini '' a2
+"$INITOOL" d tests/comments.ini '' a2
 echo -----
-$INITOOL d tests/comments.ini '' a3
+"$INITOOL" d tests/comments.ini '' a3

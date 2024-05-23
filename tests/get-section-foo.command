@@ -1,1 +1,1 @@
-$INITOOL g tests/test.ini foo
+"$INITOOL" g tests/test.ini foo

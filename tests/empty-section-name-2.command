@@ -1,1 +1,1 @@
-$INITOOL -p get tests/empty-section-name.ini 2>&1 || true
+"$INITOOL" -p get tests/empty-section-name.ini 2>&1 || true

@@ -1,7 +1,7 @@
-$INITOOL get tests/php.ini
+"$INITOOL" get tests/php.ini
 echo ---
-$INITOOL exists tests/php.ini PHP && echo yes || echo no
+"$INITOOL" exists tests/php.ini PHP && echo yes || echo no
 echo ---
-$INITOOL set tests/php.ini test k v
+"$INITOOL" set tests/php.ini test k v
 echo ---
-$INITOOL delete tests/php.ini PHP
+"$INITOOL" delete tests/php.ini PHP

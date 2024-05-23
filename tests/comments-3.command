@@ -1,3 +1,3 @@
-$INITOOL g tests/comments-hash.ini
+"$INITOOL" g tests/comments-hash.ini
 echo -----
-$INITOOL g tests/comments-mixed.ini
+"$INITOOL" g tests/comments-mixed.ini

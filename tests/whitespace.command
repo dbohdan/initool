@@ -1,1 +1,1 @@
-$INITOOL g tests/php.ini
+"$INITOOL" g tests/php.ini

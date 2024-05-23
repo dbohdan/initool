@@ -1,1 +1,1 @@
-$INITOOL g tests/test.ini bar
+"$INITOOL" g tests/test.ini bar

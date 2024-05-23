@@ -1,1 +1,1 @@
-$INITOOL g tests/comments-indented.ini
+"$INITOOL" g tests/comments-indented.ini

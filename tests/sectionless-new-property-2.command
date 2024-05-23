@@ -1,1 +1,1 @@
-$INITOOL set tests/php.ini '' c d
+"$INITOOL" set tests/php.ini '' c d

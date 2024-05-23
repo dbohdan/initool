@@ -1,1 +1,1 @@
-$INITOOL g tests/boot.ini
+"$INITOOL" g tests/boot.ini

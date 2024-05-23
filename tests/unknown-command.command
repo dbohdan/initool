@@ -1,1 +1,1 @@
-$INITOOL foo 2>&1 || true
+"$INITOOL" foo 2>&1 || true

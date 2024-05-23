@@ -1,1 +1,1 @@
-$INITOOL g tests/sql.ini
+"$INITOOL" g tests/sql.ini
