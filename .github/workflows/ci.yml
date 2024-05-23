@@ -71,10 +71,17 @@ jobs:
           New-Item -ItemType Directory -Path C:\mosml -Force
           Invoke-WebRequest -Uri https://dbohdan.com/dist/mosml-2.10.1-win32.7z -OutFile C:\mosml\mosml.7z
           7z x -oC:\mosml C:\mosml\mosml.7z
+      - name: Download busybox-w32
+        run: |
+          Invoke-WebRequest -Uri https://frippery.org/files/busybox/busybox-w32-FRP-5301-gda71f7c57.exe -OutFile busybox.exe
+          if (
+            (Get-FileHash -Algorithm SHA256 busybox.exe).Hash -ne "DD6B2FC4D4809FF39F0E738C0DCB85624187ABF3E3239043BDD4E64BB4BA8EC3") {
+            throw "Wrong checksum"
+          }
       - name: Build initool
         run: .\build.cmd /batch /package
-      - name: Check that initool runs
-        run: .\initool.exe version
+      - name: Run tests
+        run: .\test.cmd /batch
       - name: Add artifact name to env
         run: |
           $artifact = Get-ChildItem -Filter *.zip | Select-Object -First 1
