@@ -9,7 +9,7 @@ echo -- Delete [PHP]
 echo -- Delete "engine" in [PHP]
 "$INITOOL" d tests/php.ini PHP engine
 echo -- Delete both keys in [PHP]
-"$INITOOL" d tests/php.ini PHP engine | "$INITOOL" d /dev/stdin PHP short_open_tag
+"$INITOOL" d tests/php.ini PHP engine | "$INITOOL" d - PHP short_open_tag
 echo -- Delete [test]
 "$INITOOL" d tests/php.ini test
 echo -- Set k=v in [PHP]
