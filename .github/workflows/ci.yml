@@ -61,7 +61,7 @@ jobs:
           libs/
 
   windows:
-    runs-on: windows-2019
+    runs-on: windows-latest
     steps:
       - name: 'Disable `autocrlf` in Git'
         run: git config --global core.autocrlf false
