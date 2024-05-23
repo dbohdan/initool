@@ -11,7 +11,7 @@ fun checkWrongEncoding (lines: string list) =
   let
     val _ =
       case lines of
-        [first] =>
+        first :: _ =>
           (case map Char.ord (String.explode first) of
              0x00 :: 0x00 :: 0xFE :: 0xFF :: _ =>
                raise Encoding (unsupportedEncoding ^ "UTF-32 BE")
@@ -121,7 +121,7 @@ fun helpCommand [] = Output allUsage
       Error (invalidUsage ^ (formatArgs (cmd :: rest)) ^ "\n" ^ usage ^ cmd)
 
 fun versionCommand [] =
-      let val version = "0.16.0"
+      let val version = "0.16.1"
       in Output (version ^ "\n")
       end
   | versionCommand [_] = versionCommand []
