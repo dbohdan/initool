@@ -29,6 +29,7 @@ struct
   fun fromString s = StrId s
 
   fun fromStringWildcard "*" = Wildcard
+    | fromStringWildcard "_" = Wildcard
     | fromStringWildcard s = StrId s
 
   fun toString id' =

@@ -74,9 +74,11 @@ initool get tests/test.ini [foo]
 Top-level properties (properties not in any section) are accessed by using an empty string as the section name.
 The `exists` command with just an empty string as the argument tells you whether or not there are any top-level properties.
 
-The section name and key can be `*` (a "wildcard") to match anything.
+The section name and key can be `*` or `_` (a "wildcard") to match anything.
 For example, `set file.ini "*" foo bar` will set the key `foo` to the value `bar` in every existing section.
 It will set the key `foo` at the top level if the file already has top-level properties.
+Windows executables built with MoSML unavoidably expand `*` to a list of files.
+Use `_` on Windows.
 
 The order in which properties appear in the INI file is preserved.
 A new property is added after the last property in its section.
