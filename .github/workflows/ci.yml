@@ -81,7 +81,8 @@ jobs:
       - name: Download busybox-w32
         run: |
           Invoke-WebRequest -Uri https://dbohdan.com/dist/busybox-w32-FRP-5301-gda71f7c57.7z -OutFile busybox.7z
-          7z x busybox.7z
+          7z x -obusybox busybox.7z
+          New-Item -Path busybox.exe -ItemType SymbolicLink -Value busybox\busybox.exe
 
           if (
             (Get-FileHash -Algorithm SHA256 busybox.exe).Hash -ne "DD6B2FC4D4809FF39F0E738C0DCB85624187ABF3E3239043BDD4E64BB4BA8EC3"
