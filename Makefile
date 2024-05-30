@@ -13,7 +13,7 @@ initool-static: initool.mlb stringtrim.sml ini.sml initool.sml
 VERSION: initool
 	./initool version > VERSION
 
-test:
+test: initool
 	sh test.sh
 
 clean:
