@@ -16,6 +16,12 @@ foo=3
 
 [bar]
 foo=3
+-- replace
+[bar]
+foo=1
+
+[bar]
+foo=3
 -- delete
 [bar]
 

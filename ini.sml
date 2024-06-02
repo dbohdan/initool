@@ -58,14 +58,15 @@ struct
   | PropertyLine of property
   | SectionLine of section
   | VerbatimLine of string
+
   datatype operation =
     Noop
   | SelectSection of Id.id
   | SelectProperty of {section: Id.id, key: Id.id}
   | RemoveSection of Id.id
   | RemoveProperty of {section: Id.id, key: Id.id}
-  | UpdateProperty of {section: Id.id, key: Id.id, newValue: string}
-
+  | UpdateProperty of
+      {section: Id.id, key: Id.id, oldValue: Id.id, newValue: string}
 
   exception Tokenization of string
 
@@ -172,41 +173,54 @@ struct
    * the operation opr.
    *)
   fun matchOp (opts: Id.options) (opr: operation) (sec: section) (i: item) :
-    bool =
+    item option =
     let
       val sectionName = #name sec
       val matches = Id.same opts
     in
       case (opr, i) of
-        (Noop, _) => true
-      | (SelectSection osn, _) => matches osn sectionName
+        (Noop, _) => SOME i
+      | (SelectSection osn, _) =>
+          if matches osn sectionName then SOME i else NONE
       | (SelectProperty {section = osn, key = okey}, Property {key, value = _}) =>
-          matches osn sectionName andalso matches okey key
-      | (SelectProperty {section = osn, key = okey}, Comment _) => false
-      | (SelectProperty {section = osn, key = okey}, Empty) => false
-      | (SelectProperty {section = osn, key = okey}, Verbatim _) => false
-      | (RemoveSection osn, _) => not (matches osn sectionName)
+          if matches osn sectionName andalso matches okey key then SOME i
+          else NONE
+      | (SelectProperty {section = _, key = _}, Comment _) => NONE
+      | (SelectProperty {section = _, key = _}, Empty) => NONE
+      | (SelectProperty {section = _, key = _}, Verbatim _) => NONE
+      | (RemoveSection osn, _) =>
+          if matches osn sectionName then NONE else SOME i
       | (RemoveProperty {section = osn, key = okey}, Property {key, value = _}) =>
-          not (matches osn sectionName andalso matches okey key)
-      | (RemoveProperty {section = osn, key = okey}, Comment _) => true
-      | (RemoveProperty {section = osn, key = okey}, Empty) => true
-      | (RemoveProperty {section = osn, key = okey}, Verbatim _) => true
-      | ( UpdateProperty {section = osn, key = okey, newValue = nv}
-        , Property {key, value = _}
-        ) => matches osn sectionName andalso matches okey key
-      | (UpdateProperty {section = osn, key = okey, newValue = nv}, Comment _) =>
-          false
-      | (UpdateProperty {section = osn, key = okey, newValue = nv}, Empty) =>
-          false
-      | (UpdateProperty {section = osn, key = okey, newValue = nv}, Verbatim _) =>
-          false
+          if matches osn sectionName andalso matches okey key then NONE
+          else SOME i
+      | (RemoveProperty {section = _, key = _}, Comment _) => SOME i
+      | (RemoveProperty {section = _, key = _}, Empty) => SOME i
+      | (RemoveProperty {section = _, key = _}, Verbatim _) => SOME i
+      | ( UpdateProperty
+            {section = osn, key = okey, oldValue = ov, newValue = nv}
+        , Property {key, value}
+        ) =>
+          if
+            matches osn sectionName andalso matches okey key
+            andalso matches ov (Id.StrId value)
+          then SOME (Property {key = key, value = nv})
+          else SOME i
+      | ( UpdateProperty {section = _, key = _, oldValue = _, newValue = _}
+        , Comment _
+        ) => SOME i
+      | ( UpdateProperty {section = _, key = _, oldValue = _, newValue = _}
+        , Empty
+        ) => SOME i
+      | ( UpdateProperty {section = _, key = _, oldValue = _, newValue = _}
+        , Verbatim _
+        ) => SOME i
     end
 
   fun select (opts: Id.options) (opr: operation) (ini: ini_data) : ini_data =
     let
       fun selectItems (opr: operation) (sec: section) : section =
         { name = (#name sec)
-        , contents = List.filter (matchOp opts opr sec) (#contents sec)
+        , contents = List.mapPartial (matchOp opts opr sec) (#contents sec)
 
         }
       val sectionsFiltered =
@@ -316,6 +330,20 @@ struct
       List.exists
         (fn {contents = (Property _ :: _), name = _} => true | _ => false)
         sections
+    end
+
+  fun valueExists (opts: Id.options) (section: Id.id) (key: Id.id)
+    (value: Id.id) (ini: ini_data) =
+    let
+      val q = SelectProperty {section = section, key = key}
+      val sections = select opts q ini
+    in
+      List.exists
+        (fn {contents, name = _} =>
+           List.exists
+             (fn (Property {key = _, value = propValue}) =>
+                Id.same opts (Id.StrId propValue) value
+               | _ => false) contents) sections
     end
 
   fun removeEmptySections (sections: ini_data) =

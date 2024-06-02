@@ -10,5 +10,8 @@ echo -- exists
 echo -- set
 "$INITOOL" set tests/repeat-key.ini '' foo 3
 
+echo -- replace
+"$INITOOL" replace tests/repeat-key.ini '' foo 2 3
+
 echo -- delete
 "$INITOOL" delete tests/repeat-key.ini '' foo

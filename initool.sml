@@ -79,10 +79,11 @@ val processFileQuiet = processFileCustom true
 val getUsage = " <filename> [<section> [<key> [-v|--value-only]]]"
 val existsUsage = " <filename> <section> [<key>]"
 val setUsage = " <filename> <section> <key> <value>"
+val replaceUsage = " <filename> <section> <key> <old-value> <new-value>"
 val deleteUsage = " <filename> <section> [<key>]"
 
 val availableCommands =
-  "available commands: get, exists, set, delete, help, version"
+  "available commands: get, exists, set, replace, delete, help, version"
 val invalidUsage = "invalid usage: "
 val unknownCommand = "unknown command: "
 val usage = "usage: "
@@ -96,10 +97,11 @@ val allUsage =
       , "get" ^ getUsage
       , "exists" ^ existsUsage
       , "set" ^ setUsage
+      , "replace" ^ replaceUsage
       , "delete" ^ deleteUsage
       ]) ^ "\n\n    help\n    version\n\n"
    ^ "Each command can be abbreviated to its first letter. "
-   ^ "<section> and <key> can be '*' to match anything.")
+   ^ "<section>, <key>, and <old-value> can be '*' or '_' to match anything.")
 
 fun formatArgs (args: string list) =
   let
@@ -121,7 +123,7 @@ fun helpCommand [] = Output allUsage
       Error (invalidUsage ^ (formatArgs (cmd :: rest)) ^ "\n" ^ usage ^ cmd)
 
 fun versionCommand [] =
-      let val version = "0.17.0"
+      let val version = "0.18.0"
       in Output (version ^ "\n")
       end
   | versionCommand [_] = versionCommand []
@@ -225,6 +227,31 @@ fun setCommand (opts: options) [_, filename, section, key, value] =
          ^ setUsage)
   | setCommand opts [] = setCommand opts ["set"]
 
+fun replaceCommand (opts: options)
+      [_, filename, section, key, oldValue, newValue] =
+      (* Replace old value with new *)
+      let
+        val section = Id.fromStringWildcard section
+        val key = Id.fromStringWildcard key
+        val oldValue = Id.fromStringWildcard oldValue
+        val q = Ini.UpdateProperty
+          { section = section
+          , key = key
+          , oldValue = oldValue
+          , newValue = newValue
+          }
+        val successFn = fn (parsed, _) =>
+          Ini.valueExists (idOptions opts) section key oldValue parsed
+      in
+        processFile (#passThrough opts) successFn
+          (Ini.select (idOptions opts) q) filename
+      end
+  | replaceCommand opts (cmd :: rest) =
+      Error
+        (invalidUsage ^ (formatArgs (cmd :: rest)) ^ "\n" ^ usage ^ cmd
+         ^ replaceUsage)
+  | replaceCommand opts [] = replaceCommand opts ["replace"]
+
 fun deleteCommand (opts: options) [_, filename, section] =
       (* Delete section *)
       let
@@ -293,6 +320,10 @@ fun processArgs (opts: options) [] = helpCommand []
       setCommand opts ("s" :: args)
   | processArgs opts ("set" :: args) =
       setCommand opts ("set" :: args)
+  | processArgs opts ("r" :: args) =
+      replaceCommand opts ("r" :: args)
+  | processArgs opts ("replace" :: args) =
+      replaceCommand opts ("replace" :: args)
   | processArgs opts ("d" :: args) =
       deleteCommand opts ("d" :: args)
   | processArgs opts ("delete" :: args) =

@@ -9,4 +9,7 @@ foo=2
 -- set
 foo=3
 foo=3
+-- replace
+foo=1
+foo=3
 -- delete

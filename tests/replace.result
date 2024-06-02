@@ -1,0 +1,63 @@
+-- case-sensitive, match
+[PHP]
+
+;;;;;;;;;;;;;;;;;;;
+; About php.ini   ;
+;;;;;;;;;;;;;;;;;;;
+; PHP's initialization file.
+
+engine=Off
+short_open_tag=Off
+
+[test]
+
+success
+-- case-sensitive, no match
+[PHP]
+
+;;;;;;;;;;;;;;;;;;;
+; About php.ini   ;
+;;;;;;;;;;;;;;;;;;;
+; PHP's initialization file.
+
+engine=On
+short_open_tag=Off
+
+[test]
+
+failure
+-- case-insensitive, match
+[PHP]
+
+;;;;;;;;;;;;;;;;;;;
+; About php.ini   ;
+;;;;;;;;;;;;;;;;;;;
+; PHP's initialization file.
+
+engine=off
+short_open_tag=Off
+
+[test]
+
+success
+-- case-insensitive, no match
+[PHP]
+
+;;;;;;;;;;;;;;;;;;;
+; About php.ini   ;
+;;;;;;;;;;;;;;;;;;;
+; PHP's initialization file.
+
+engine=On
+short_open_tag=Off
+
+[test]
+
+failure
+-- long command
+a=
+
+[section]
+key1=value1
+key2=value2
+success

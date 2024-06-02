@@ -42,6 +42,48 @@ name2="repeat value"
 name1=baz1
 name2=baz2
 name3=baz3
+-- replace in any section
+[foo]
+name1=foo1
+name2=foo2
+name3="repeat value"
+
+[bar]
+name1=HELLO
+name2="repeat value"
+
+[baz]
+name1=baz1
+name2=baz2
+name3=baz3
+-- replace, any key in any section
+[foo]
+name1=foo1
+name2=foo2
+name3="new repeat value"
+
+[bar]
+name1=bar1
+name2="new repeat value"
+
+[baz]
+name1=baz1
+name2=baz2
+name3=baz3
+-- replace, any value
+[foo]
+name1=HELLO
+name2=foo2
+name3="repeat value"
+
+[bar]
+name1=bar1
+name2="repeat value"
+
+[baz]
+name1=baz1
+name2=baz2
+name3=baz3
 -- delete in any section
 [foo]
 name2=foo2

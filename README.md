@@ -42,21 +42,22 @@ The following commands are available:
 - `get <filename> [<section> [<key> [-v|--value-only]]]` — retrieve data.
 - `exists <filename> <section> [<key>]` — check if a section or a property exists.
 - `set <filename> <section> <key> <value>` — set a property's value.
+- `replace <filename> <section> <key> <old-value> <new-value>` — set a property's value if it has a particular value.
 - `delete <filename> <section> [<key>]` — delete a section or a property.
 - `help` — print the help message.
 - `version` — print the version number.
 
-Commands can be abbreviated to their first letter: `g`, `e`, `s`, `d`, `h`, `v`.
+Commands can be abbreviated to their first letter: `g`, `e`, `s`, `r`, `d`, `h`, `v`.
 The global options `-i`/`--ignore-case` and `-p`/`--pass-through` must precede the command name.
 
 When given a valid command, initool first reads the INI file `filename` in its entirety.
-If the filename is `-`, initool reads standard input. For the commands `get`, `delete`, and `set`, it then prints to standard output the file's contents with the desired change.
+If the filename is `-`, initool reads standard input. For the commands `get`, `set`, `replace`, and `delete`, it then prints to standard output the file's contents with the desired change.
 For `exists`, it reports whether the section or the property exists through its exit status.
 
 An INI file consists of properties (`key=value` lines) and sections (designated with a `[section name]` header line).
 A property can be at the "top level" of the file (before any section headers) or in a section (after a section header).
 To do something with a property, you must give initool the correct section name.
-Section names and keys are [case-sensitive](#case-sensitivity) by default.
+Section names and keys are [case-sensitive](#case-sensitivity) by default, as are old values for the command `replace`.
 The global option `-i` or `--ignore-case` makes commands not distinguish between lower-case and upper-case [ASCII](https://en.wikipedia.org/wiki/ASCII) letters "A" through "Z" in section names and keys.
 
 Do not include the square brackets in the section argument.
@@ -172,7 +173,7 @@ Because of this, you can reformat initool-compatible INI files with the command 
 How nonexistent sections and properties are handled depends on the command.
 
 - `get`
-  - **Result:** initool produces no output when the section or key does not exist.
+  - **Result:** Initool produces no output when the section or the key doesn't exist.
   - **Exit status:** 0 if the file, section, or property exists, 1 if it doesn't.
 - `exists`
   - **Result:** No output.
@@ -180,6 +181,9 @@ How nonexistent sections and properties are handled depends on the command.
 - `set`
   - **Result:** The section and the property are created as needed.
   - **Exit status:** 0.
+- `replace`
+  - **Result:** Nothing from the input changes in the output.
+  - **Exit status:** 0 if the property exists and has the old value, 1 if it doesn't exist or has a different value.
 - `delete`
   - **Result:** Nothing is removed from the input in the output.
   - **Exit status:** 0 if the section or property was deleted, 1 if it wasn't.
@@ -211,7 +215,7 @@ Initool is [case-sensitive](https://en.wikipedia.org/wiki/Case_sensitivity) by d
 This means that it considers `[BOOT]` and `[boot]` different sections and `foo=5` and `FOO=5` properties with different keys.
 The option `-i`/`--ignore-case` changes this behavior.
 It makes initool treat ASCII letters "A" through "Z" and "a" through "z" as equal
-when looking for sections and keys.
+when looking for sections and keys (every command) and values (`replace`).
 The case of section names and keys is preserved in the output regardless of the `-i`/`--ignore-case` option.
 
 ### Repeated items

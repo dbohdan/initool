@@ -15,6 +15,13 @@ echo -- set in any section
 echo -- set, any key
 "$INITOOL" set tests/test.ini foo "$wildcard" HELLO
 
+echo -- replace in any section
+"$INITOOL" r tests/test.ini "$wildcard" name1 bar1 HELLO
+echo -- replace, any key in any section
+"$INITOOL" r tests/test.ini "$wildcard" "$wildcard" '"repeat value"' '"new repeat value"'
+echo -- replace, any value
+"$INITOOL" r tests/test.ini foo name1 "$wildcard" HELLO
+
 echo -- delete in any section
 "$INITOOL" delete tests/test.ini "$wildcard" name1
 echo -- delete, any key
