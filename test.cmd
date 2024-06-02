@@ -7,7 +7,7 @@ for %%a in (%*) do (
 )
 
 echo on
-busybox.exe sh -c "INITOOL=./initool.exe make test"
+busybox.exe sh -c "INITOOL=./initool.exe sh test.sh"
 @echo off
 
 if "%flag_batch%"=="0" pause
