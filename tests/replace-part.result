@@ -1,0 +1,50 @@
+-- case-sensitive, match, beginning
+key=a longer value.
+another-key=ABAABBAAABBB
+empty=
+success
+-- case-sensitive, match, middle
+key=A value.
+another-key=ABAABBAAABBB
+empty=
+success
+-- case-sensitive, match, end
+key=A longer string
+another-key=ABAABBAAABBB
+empty=
+success
+-- case-sensitive, no match, end
+key=A longer value.
+another-key=ABAABBAAABBB
+empty=
+failure
+-- case-insensitive, match, beginning
+key=a longer value.
+another-key=ABAABBAAABBB
+empty=
+success
+-- case-insensitive, match, middle
+key=A value.
+another-key=ABAABBAAABBB
+empty=
+success
+-- case-insensitive, match, end
+key=A longer string
+another-key=ABAABBAAABBB
+empty=
+success
+-- only replace the first occurrence
+key=A longer value.
+another-key=ABGGBBAAABBB
+empty=
+success
+-- empty text, match
+key=A longer value.
+another-key=ABAABBAAABBB
+empty=something
+success
+-- empty text, no match
+key=A longer value.
+another-key=ABAABBAAABBB
+empty=
+failure

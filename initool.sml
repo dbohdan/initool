@@ -79,7 +79,7 @@ val processFileQuiet = processFileCustom true
 val getUsage = " <filename> [<section> [<key> [-v|--value-only]]]"
 val existsUsage = " <filename> <section> [<key>]"
 val setUsage = " <filename> <section> <key> <value>"
-val replaceUsage = " <filename> <section> <key> <old-value> <new-value>"
+val replaceUsage = " <filename> <section> <key> <text> <replacement>"
 val deleteUsage = " <filename> <section> [<key>]"
 
 val availableCommands =
@@ -101,7 +101,8 @@ val allUsage =
       , "delete" ^ deleteUsage
       ]) ^ "\n\n    help\n    version\n\n"
    ^ "Each command can be abbreviated to its first letter. "
-   ^ "<section>, <key>, and <old-value> can be '*' or '_' to match anything.")
+   ^ "<section>, <key>, and <text> can be '*' or '_' to match anything. "
+   ^ "Empty <text> matches empty values.")
 
 fun formatArgs (args: string list) =
   let
@@ -147,8 +148,10 @@ fun getCommand (opts: options) [_, filename] =
         val section = Id.fromStringWildcard section
         val key = Id.fromStringWildcard key
         val successFn = fn (_, filtered) =>
-          Ini.propertyExists (idOptions opts) section key filtered
-        val q = Ini.SelectProperty {section = section, key = key}
+          Ini.propertyExists (idOptions opts) section key Id.Wildcard filtered
+        val q =
+          Ini.SelectProperty
+            {section = section, key = key, pattern = Id.Wildcard}
         val filterFn = fn sections =>
           (Ini.removeEmptySections o (Ini.select (idOptions opts) q)) sections
       in
@@ -162,8 +165,10 @@ fun getCommand (opts: options) [_, filename] =
         val section = Id.fromStringWildcard section
         val key = Id.fromStringWildcard key
         val successFn = fn (_, filtered) =>
-          Ini.propertyExists (idOptions opts) section key filtered
-        val q = Ini.SelectProperty {section = section, key = key}
+          Ini.propertyExists (idOptions opts) section key Id.Wildcard filtered
+        val q =
+          Ini.SelectProperty
+            {section = section, key = key, pattern = Id.Wildcard}
         val parsed =
           ((Ini.select (idOptions opts) q) o (Ini.parse (#passThrough opts))
            o checkWrongEncoding o readLines) filename
@@ -183,7 +188,6 @@ fun getCommand (opts: options) [_, filename] =
          ^ getUsage)
   | getCommand opts [] = getCommand opts ["get"]
 
-
 fun existsCommand (opts: options) [_, filename, section] =
       (* Section exists *)
       let
@@ -199,7 +203,7 @@ fun existsCommand (opts: options) [_, filename, section] =
         val section = Id.fromStringWildcard section
         val key = Id.fromStringWildcard key
         val successFn = fn (parsed, _) =>
-          Ini.propertyExists (idOptions opts) section key parsed
+          Ini.propertyExists (idOptions opts) section key Id.Wildcard parsed
       in
         processFileQuiet (#passThrough opts) successFn (fn x => x) filename
       end
@@ -228,20 +232,20 @@ fun setCommand (opts: options) [_, filename, section, key, value] =
   | setCommand opts [] = setCommand opts ["set"]
 
 fun replaceCommand (opts: options)
-      [_, filename, section, key, oldValue, newValue] =
-      (* Replace old value with new *)
+      [_, filename, section, key, pattern, replacement] =
+      (* Replace pattern in value *)
       let
         val section = Id.fromStringWildcard section
         val key = Id.fromStringWildcard key
-        val oldValue = Id.fromStringWildcard oldValue
-        val q = Ini.UpdateProperty
+        val pattern = Id.fromStringWildcard pattern
+        val q = Ini.ReplaceInValue
           { section = section
           , key = key
-          , oldValue = oldValue
-          , newValue = newValue
+          , pattern = pattern
+          , replacement = replacement
           }
         val successFn = fn (parsed, _) =>
-          Ini.valueExists (idOptions opts) section key oldValue parsed
+          Ini.propertyExists (idOptions opts) section key pattern parsed
       in
         processFile (#passThrough opts) successFn
           (Ini.select (idOptions opts) q) filename
@@ -270,7 +274,7 @@ fun deleteCommand (opts: options) [_, filename, section] =
         val key = Id.fromStringWildcard key
         val q = Ini.RemoveProperty {section = section, key = key}
         val successFn = fn (parsed, _) =>
-          Ini.propertyExists (idOptions opts) section key parsed
+          Ini.propertyExists (idOptions opts) section key Id.Wildcard parsed
       in
         processFile (#passThrough opts) successFn
           (Ini.select (idOptions opts) q) filename

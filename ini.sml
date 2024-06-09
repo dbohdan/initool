@@ -62,11 +62,11 @@ struct
   datatype operation =
     Noop
   | SelectSection of Id.id
-  | SelectProperty of {section: Id.id, key: Id.id}
+  | SelectProperty of {section: Id.id, key: Id.id, pattern: Id.id}
   | RemoveSection of Id.id
   | RemoveProperty of {section: Id.id, key: Id.id}
-  | UpdateProperty of
-      {section: Id.id, key: Id.id, oldValue: Id.id, newValue: string}
+  | ReplaceInValue of
+      {section: Id.id, key: Id.id, pattern: Id.id, replacement: string}
 
   exception Tokenization of string
 
@@ -168,6 +168,41 @@ struct
       if concat = "" then "" else concat ^ "\n"
     end
 
+  fun findSubstring (matcher: string -> string -> bool) (needle: string)
+    (haystack: string) (start: int) : (int * int) option =
+    let
+      val needleSize = String.size needle
+      val haystackSize = String.size haystack
+    in
+      if needleSize = 0 andalso haystackSize = 0 then
+        SOME (0, 0)
+      else if needleSize = 0 orelse start + needleSize > haystackSize then
+        NONE
+      else if matcher needle (String.substring (haystack, start, needleSize)) then
+        SOME (start, needleSize)
+      else
+        findSubstring matcher needle haystack (start + 1)
+    end
+
+  fun hasSubstring (matcher: string -> string -> bool) (needle: string)
+    (haystack: string) : bool =
+    Option.isSome (findSubstring matcher needle haystack 0)
+
+  fun replace (matcher: string -> string -> bool) (pattern: Id.id)
+    (replacement: string) (haystack: string) : string =
+    case pattern of
+      Id.Wildcard => replacement
+    | Id.StrId needle =>
+        case findSubstring matcher needle haystack 0 of
+          NONE => haystack
+        | SOME (i, needleSize) =>
+            let
+              val before' = String.substring (haystack, 0, i)
+              val haystackSize = String.size haystack
+              val after = String.extract (haystack, i + needleSize, NONE)
+            in
+              before' ^ replacement ^ after
+            end
 
   (* Say whether the item i in section sec should be returned under
    * the operation opr.
@@ -177,17 +212,26 @@ struct
     let
       val sectionName = #name sec
       val matches = Id.same opts
+      val matcher = (fn a => fn b => matches (Id.StrId a) (Id.StrId b))
     in
       case (opr, i) of
         (Noop, _) => SOME i
       | (SelectSection osn, _) =>
           if matches osn sectionName then SOME i else NONE
-      | (SelectProperty {section = osn, key = okey}, Property {key, value = _}) =>
-          if matches osn sectionName andalso matches okey key then SOME i
+      | ( SelectProperty {section = osn, key = okey, pattern = pattern}
+        , Property {key, value}
+        ) =>
+          if
+            matches osn sectionName andalso matches okey key
+            andalso
+            (case pattern of
+               Id.Wildcard => true
+             | Id.StrId substring => hasSubstring matcher substring value)
+          then SOME i
           else NONE
-      | (SelectProperty {section = _, key = _}, Comment _) => NONE
-      | (SelectProperty {section = _, key = _}, Empty) => NONE
-      | (SelectProperty {section = _, key = _}, Verbatim _) => NONE
+      | (SelectProperty {section = _, key = _, pattern = _}, Comment _) => NONE
+      | (SelectProperty {section = _, key = _, pattern = _}, Empty) => NONE
+      | (SelectProperty {section = _, key = _, pattern = _}, Verbatim _) => NONE
       | (RemoveSection osn, _) =>
           if matches osn sectionName then NONE else SOME i
       | (RemoveProperty {section = osn, key = okey}, Property {key, value = _}) =>
@@ -196,22 +240,26 @@ struct
       | (RemoveProperty {section = _, key = _}, Comment _) => SOME i
       | (RemoveProperty {section = _, key = _}, Empty) => SOME i
       | (RemoveProperty {section = _, key = _}, Verbatim _) => SOME i
-      | ( UpdateProperty
-            {section = osn, key = okey, oldValue = ov, newValue = nv}
+      | ( ReplaceInValue
+            { section = osn
+            , key = okey
+            , pattern = pattern
+            , replacement = replacement
+            }
         , Property {key, value}
         ) =>
-          if
-            matches osn sectionName andalso matches okey key
-            andalso matches ov (Id.StrId value)
-          then SOME (Property {key = key, value = nv})
-          else SOME i
-      | ( UpdateProperty {section = _, key = _, oldValue = _, newValue = _}
+          if matches osn sectionName andalso matches okey key then
+            SOME (Property
+              {key = key, value = replace matcher pattern replacement value})
+          else
+            SOME i
+      | ( ReplaceInValue {section = _, key = _, pattern = _, replacement = _}
         , Comment _
         ) => SOME i
-      | ( UpdateProperty {section = _, key = _, oldValue = _, newValue = _}
+      | ( ReplaceInValue {section = _, key = _, pattern = _, replacement = _}
         , Empty
         ) => SOME i
-      | ( UpdateProperty {section = _, key = _, oldValue = _, newValue = _}
+      | ( ReplaceInValue {section = _, key = _, pattern = _, replacement = _}
         , Verbatim _
         ) => SOME i
     end
@@ -227,7 +275,7 @@ struct
         case opr of
           SelectSection osn =>
             List.filter (fn sec => Id.same opts osn (#name sec)) ini
-        | SelectProperty {section = osn, key = _} =>
+        | SelectProperty {section = osn, key = _, pattern = _} =>
             List.filter (fn sec => Id.same opts osn (#name sec)) ini
         | RemoveSection osn =>
             List.filter (fn sec => not (Id.same opts osn (#name sec))) ini
@@ -322,28 +370,14 @@ struct
     end
 
   fun propertyExists (opts: Id.options) (section: Id.id) (key: Id.id)
-    (ini: ini_data) =
+    (pattern: Id.id) (ini: ini_data) =
     let
-      val q = SelectProperty {section = section, key = key}
+      val q = SelectProperty {section = section, key = key, pattern = pattern}
       val sections = select opts q ini
     in
       List.exists
         (fn {contents = (Property _ :: _), name = _} => true | _ => false)
         sections
-    end
-
-  fun valueExists (opts: Id.options) (section: Id.id) (key: Id.id)
-    (value: Id.id) (ini: ini_data) =
-    let
-      val q = SelectProperty {section = section, key = key}
-      val sections = select opts q ini
-    in
-      List.exists
-        (fn {contents, name = _} =>
-           List.exists
-             (fn (Property {key = _, value = propValue}) =>
-                Id.same opts (Id.StrId propValue) value
-               | _ => false) contents) sections
     end
 
   fun removeEmptySections (sections: ini_data) =
