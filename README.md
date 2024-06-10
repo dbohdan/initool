@@ -12,6 +12,8 @@ Rather than modify an INI file in place, it prints the modified contents of the 
     - [POSIX](#posix)
     - [Windows](#windows)
     - [Both](#both)
+      - [PowerShell](#powershell)
+      - [Most shells](#most-shells)
   - [Whitespace](#whitespace)
   - [Nonexistent sections and properties](#nonexistent-sections-and-properties)
   - [Unparsable lines](#unparsable-lines)
@@ -54,11 +56,14 @@ When given a valid command, initool first reads the INI file `filename` in its e
 If the filename is `-`, initool reads standard input. For the commands `get`, `set`, `replace`, and `delete`, it then prints to standard output the file's contents with the desired change.
 For `exists`, it reports whether the section or the property exists through its exit status.
 
+**Initool never modifies the input file.**
+(One exception is if you redirect initool's output to the same file as input, which results in an empty file like with other programs.)
+
 An INI file consists of properties (`key=value` lines) and sections (designated with a `[section name]` header line).
 A property can be at the "top level" of the file (before any section headers) or in a section (after a section header).
 To do something with a property, you must give initool the correct section name.
 Section names and keys are [case-sensitive](#case-sensitivity) by default, as is text for the command `replace`.
-The global option `-i` or `--ignore-case` makes commands not distinguish between lower-case and upper-case [ASCII](https://en.wikipedia.org/wiki/ASCII) letters "A" through "Z" in section names and keys.
+The global option `-i` or `--ignore-case` makes commands not distinguish between lower-case and upper-case [ASCII](https://en.wikipedia.org/wiki/ASCII) letters "A" through "Z" in section names, keys, and text.
 
 Do not include the square brackets in the section argument.
 
@@ -79,13 +84,15 @@ Only `_` works on Windows.
 For example, `set file.ini _ foo bar` will set the key `foo` to the value `bar` in every existing section.
 It will set the key `foo` at the top level if the file already has top-level properties.
 To match a one-character section name or key that is `*` or `_`, use `\*` and `\_` respectively.
-An initial backslash is removed from the section-name and key argument.
+An initial backslash is removed from the section name and the key argument.
 
 The order in which properties appear in the INI file is preserved.
 A new property is added after the last property in its section.
 
-Initool preserves INI file comments (lines where the first character that is not [whitespace](#whitespace) is either `;` or `#`) in the output when it prints a whole file or a section.
-It also preserves empty lines.
+Initool preserves INI file comments in the output when it prints a whole file or a section.
+The comments are lines where the first character that is not [whitespace](#whitespace) is either `;` or `#`.
+Initool also preserves empty lines.
+Deleting a section removes it comments and empty lines.
 
 ### Examples
 
@@ -121,10 +128,11 @@ initool set settings.ini "" cache 1024 > settings.ini.new
 if %errorlevel% equ 0 move /y settings.ini.new settings.ini
 ```
 
-You can use pipelines in the Windows Command Prompt.
-Note that the Command Prompt has no feature like `pipefail`.
-The `%errorlevel%` will be that of the last command in the pipeline, which in the example below cannot fail, so an `%errorlevel%` check would be pointless.
-This is a reason to avoid pipelines in batch files.
+You can use pipelines in the Windows Command Prompt,
+although there is a reason to avoid them.
+The Command Prompt has no feature like `pipefail`.
+The `%errorlevel%` will be that of the last command in the pipeline, which in the example below cannot fail.
+There is no `%errorlevel%` check in the example because it would be pointless.
 
 ```batch
 initool delete settings.ini test | initool set - "" cache 1024 > settings.ini.new
@@ -133,14 +141,76 @@ move /y settings.ini.new settings.ini
 
 #### Both
 
+##### PowerShell
+
+PowerShell lets you combine initool commands into pipelines
+without the same problem as in `cmd.exe` (see above).
+The variable `$?` will be `True` only if all commands in the pipeline succeed.
+
+```powershell
+# We assume `initool` is installed in `PATH`.
+# Use `./initool` instead if the binary is in the current directory.
+initool delete settings.ini test | initool set - '' cache 1024 > settings.ini.new
+if ($?) { move -Force settings.ini.new settings.ini }
+```
+
+##### Most shells
+
+These examples work in POSIX-compatible shells, fish, `cmd.exe`, PowerShell, and others.
+`>` at the beginning of the line represents the shell's prompt.
+
+###### Retrieving a value
+
 To retrieve only the value of a property rather than the whole property (the section, key, and value), use the flag `-v` or `--value-only`:
 
 ```sh
-$ initool get tests/test.ini foo name1
+> initool get tests/test.ini foo name1
 [foo]
 name1=foo1
-$ initool get tests/test.ini foo name1 --value-only
+> initool get tests/test.ini foo name1 --value-only
 foo1
+```
+
+###### Replacing text in a value
+
+The command `replace` can do two related things:
+
+1. Replace the first occurrence of matching text in a property's value.
+   The text can be any continuous part of the value, including the whole value.
+2. Set a property's value only when it is empty.
+
+Let's start with replacing part of a value's text.
+
+```sh
+> initool get tests/replace-part.ini
+key=A longer value.
+another-key=ABAABBAAABBB
+empty=
+> initool replace tests/replace-part.ini "" key value string > updated.ini
+```
+
+The text of `updated.ini` will be:
+
+```ini
+key=A longer string.
+another-key=ABAABBAAABBB
+empty=
+```
+
+Now let's set the value of the key `empty`,
+but only if it is actually empty.
+Use an empty string as the text.
+
+```sh
+> initool replace tests/replace-part.ini "" empty "" no > updated.ini
+```
+
+The text of `updated.ini` will be:
+
+```ini
+key=A longer value.
+another-key=ABAABBAAABBB
+empty=no
 ```
 
 ### Whitespace
