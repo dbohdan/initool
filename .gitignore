@@ -1,6 +1,9 @@
 /attic
+/busybox.exe
+/camlrt.dll
 /initool
 /initool.exe
+/initool.lua
 /mosml*
 /*.sublime-*
 /*.ui
