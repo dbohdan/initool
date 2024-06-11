@@ -179,7 +179,7 @@ The command `replace` can do two related things:
    The text can be any continuous part of the value, including the whole value.
 2. Set a property's value only when it is empty.
 
-Let's start with replacing part of a value's text.
+Let's start with replacing part of a value.
 
 ```sh
 > initool get tests/replace-part.ini
@@ -189,7 +189,7 @@ empty=
 > initool replace tests/replace-part.ini "" key value string > updated.ini
 ```
 
-The text of `updated.ini` will be:
+The contents of `updated.ini` will be:
 
 ```ini
 key=A longer string.
@@ -199,13 +199,13 @@ empty=
 
 Now let's set the value of the key `empty`,
 but only if it is actually empty.
-Use an empty string as the text.
+Use an empty string as the `<text>` argument.
 
 ```sh
 > initool replace tests/replace-part.ini "" empty "" no > updated.ini
 ```
 
-The text of `updated.ini` will be:
+The contents of `updated.ini` will be:
 
 ```ini
 key=A longer value.
