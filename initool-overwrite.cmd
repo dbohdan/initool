@@ -17,13 +17,13 @@ if "%~2"=="" (
 set "command=%~1"
 set "file=%~2"
 set status=0
-set overwrite=1
+set replace_original=1
 
 if "%command%"=="e" (
-    set overwrite=0
+    set replace_original=0
 )
 if "%command%"=="exists" (
-    set overwrite=0
+    set replace_original=0
 )
 
 if "%file%"=="-" (
@@ -43,12 +43,11 @@ if defined INITOOL (
 
 set status=%errorlevel%
 if %status% equ 0 (
-    if %overwrite% equ 1 (
+    if %replace_original% equ 1 (
         copy /y "!temp!" "%file%" > nul
     )
 )
 
-:cleanup
 del "%temp%"
 exit /b %status%
 
