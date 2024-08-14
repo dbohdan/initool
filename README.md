@@ -57,7 +57,8 @@ If the filename is `-`, initool reads standard input. For the commands `get`, `s
 For `exists`, it reports whether the section or the property exists through its exit status.
 
 **Initool never modifies the input file.**
-(One exception is if you redirect initool's output to the same file as input, which results in an empty file like with other programs.)
+(One exception is if you redirect initool's output to the same file as input, which results in an empty file
+[like with other programs](https://superuser.com/questions/597244/why-does-redirecting-the-output-of-a-file-to-itself-produce-a-blank-file).)
 
 An INI file consists of properties (`key=value` lines) and sections (designated with a `[section name]` header line).
 A property can be at the "top level" of the file (before any section headers) or in a section (after a section header).
