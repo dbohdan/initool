@@ -80,7 +80,7 @@ jobs:
           7z x -oC:\mosml C:\mosml\mosml.7z
       - name: Download busybox-w32
         run: |
-          Invoke-WebRequest -Uri https://dbohdan.com/dist/busybox-w32-FRP-5301-gda71f7c57.7z -OutFile busybox.7z
+          Invoke-WebRequest -Uri https://dbohdan.com/dist/busybox-w32-frp-5301-gda71f7c57.7z -OutFile busybox.7z
           7z x -obusybox busybox.7z
           New-Item -Path busybox.exe -ItemType SymbolicLink -Value busybox\busybox.exe
 
