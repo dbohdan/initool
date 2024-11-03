@@ -11,7 +11,7 @@ rec_readlink() {
             'reached recursion limit %u with depth %u when resolving symlink\n' \
             "$rr_limit" \
             "$rr_depth" \
-            >/dev/stderr \
+            >&2 \
             ;
         return 1
     fi

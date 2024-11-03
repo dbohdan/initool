@@ -19,7 +19,7 @@ for arg in "$@"; do
 done
 
 if [ $# -lt 2 ]; then
-    usage >/dev/stderr
+    usage >&2
     exit 2
 fi
 
@@ -32,7 +32,7 @@ if [ "$command" = e ] || [ "$command" = exists ]; then
 fi
 
 if [ "$file" = - ]; then
-    echo 'file must not be "-"' >/dev/stderr
+    echo 'file must not be "-"' >&2
     exit 2
 fi
 
