@@ -124,7 +124,7 @@ fun helpCommand [] = Output allUsage
       Error (invalidUsage ^ (formatArgs (cmd :: rest)) ^ "\n" ^ usage ^ cmd)
 
 fun versionCommand [] =
-      let val version = "0.18.0"
+      let val version = "1.0.0"
       in Output (version ^ "\n")
       end
   | versionCommand [_] = versionCommand []
